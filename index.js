@@ -950,14 +950,7 @@ const WhatsBotConnect = async () => {
                   "add",
                 );
                 const remains = config.WARNCOUNT - count;
-                let warnmsg = `❏────[warning]────❏
-│ User :-@${m.number}
-❏────────────────❏
-┏────── INFO ──────❏
-│ Reason :- null!!!
-│ Count :- ${count}
-│ Remaining :- ${remains}
-┗•───────────────❏`;
+                let warnmsg = `⚠️ WARNING ⚠️\nUser: @${m.number}\n------------------\nℹ️ INFO ℹ️\nReason: *Antilink*\nCount: ${count}\nRemaining: ${remains}`;
                 await m.send(warnmsg, {
                   mentions: [m.sender],
                 });
@@ -1032,14 +1025,7 @@ const WhatsBotConnect = async () => {
                   "add",
                 );
                 const remains = config.WARNCOUNT - count;
-                let warnmsg = `❏────[warning]────❏
-│ User :-@${m.number}
-❏────────────────❏
-┏────── INFO ──────❏
-│ Reason :- null!!!
-│ Count :- ${count}
-│ Remaining :- ${remains}
-┗•───────────────❏`;
+                let warnmsg = `⚠️ WARNING ⚠️\nUser: @${m.number}\n------------------\nℹ️ INFO ℹ️\nReason: *Antibot*\nCount: ${count}\nRemaining: ${remains}`;
                 await m.send(warnmsg, {
                   mentions: [m.sender],
                 });
@@ -1119,14 +1105,7 @@ const WhatsBotConnect = async () => {
                       "add",
                     );
                     const remains = config.WARNCOUNT - count;
-                    let warnmsg = `❏────[warning]────❏
-│ User :-@${m.number}
-❏────────────────❏
-┏─────── INFO ─────❏
-│ Reason :- null!!!
-│ Count :- ${count}
-│ Remaining :- ${remains}
-┗•───────────────❏`;
+                    let warnmsg = `⚠️ WARNING ⚠️\nUser: @${m.number}\n------------------\nℹ️ INFO ℹ️\nReason: *Antiword*\nCount: ${count}\nRemaining: ${remains}`;
                     await m.send(warnmsg, {
                       mentions: [m.sender],
                     });
@@ -1227,9 +1206,7 @@ const WhatsBotConnect = async () => {
           }
         });
       } else if (connection === "close") {
-        console.log(
-          "Connection closed with bot. Please put New Session ID again.",
-        );
+        console.log(    "Connection closed with bot. Please put New Session ID again.", );
         await sleep(3000);
         WhatsBotConnect();
       }
@@ -1326,20 +1303,11 @@ const WhatsBotConnect = async () => {
     console.log(err);
   }
 }; // function closing
+if(config.EXPRESS_SERVER){
 app.get("/md", (req, res) => {
   res.send("Hello Alpha-md started\nversion: " + require("./package.json").version);
 });
-app.use(async (req, res) => {
-  setInterval(async (o) => {
-    try {
-      const a = await axios.get("https://" + req.hostname + "/md");
-    } catch (e) {
-      console.log("Found a Runtime Error");
-    }
-  }, 30000);
-  res.redirect("/md");
-});
 app.listen(config.PORT, () =>
   console.log(`Alpha-md Server listening on port http://localhost:${config.PORT}`),
-);
+);}
 WhatsBotConnect().catch((e) => console.log(e));

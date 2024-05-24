@@ -51,25 +51,3 @@ Alpha({
     }, 'document');
     fs.unlinkSync(fileName);
 });
-
-Alpha({
-    pattern: "repo",
-    desc: 'bot source script',
-    type: "info",
-    fromMe: mode
-}, async (message, match) => {   
-    try {
-        const response = await axios.get(`https://api.github.com/repos/${config.REPO}`);
-        if (response.status === 200) {
-          const repoData = response.data;
-          const info = `📁 *Repository Name:*  ${repoData.name}\n✏️ *Description:* ${repoData.description}\n👥 *Owner:* ${repoData.owner.login}\n⭐ *Stars:* ${repoData.stargazers_count}\n🍽️ *Forks:* ${repoData.forks_count}\n🔗 *URL:* ${repoData.html_url}
-          `.trim();
-          await message.reply(info);
-        } else {
-          await message.reply('Unable to fetch repository information.');
-        }
-      } catch (error) {
-        console.error(error);
-        await message.reply('An error occurred while fetching repository information.');
-      }
-});

@@ -14,6 +14,7 @@
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@google/generative-ai": "^0.11.4",
     "@vitalets/google-translate-api": "^9.2.0",
     "@whiskeysockets/baileys": "6.6.0",
     "alpha-md": "github:Primi373-creator/alpha-md",
@@ -49,6 +50,7 @@
     "sequelize": "^6.21.4",
     "simple-git": "^3.7.1",
     "sqlite3": "^5.0.11",
-    "util": "^0.12.4"
+    "util": "^0.12.4",
+    "youtubei.js": "^9.4.0"
   }
 }
