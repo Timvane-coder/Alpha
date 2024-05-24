@@ -1,4 +1,4 @@
-const { Alpha, GPT, mode, config,getJson} = require('../lib/');
+const { Alpha, GPT, mode, config,getJson} = require('../lib');
 
 Alpha({
     pattern: "gemini",

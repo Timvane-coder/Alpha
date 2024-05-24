@@ -1,12 +1,11 @@
-const { Alpha, broadcast, mode, config } = require('../lib');
+const { Alpha, broadcast, mode } = require('../lib');
 const fs = require('fs');
-const axios = require('axios')
 
 Alpha({
     pattern: 'bcgc ?(.*)',
     fromMe: true,
     desc: 'broadcast to all user in a specified group',
-    type: 'others',
+    type: 'broadcast',
     onlyGroup: true
 }, async (message, match) => {
 if(!message.reply_message.i) return await message.send("*_please reply to a message you want to broadcast_*");
@@ -17,10 +16,30 @@ Alpha({
     pattern: 'bcpm ?(.*)',
     fromMe: true,
     desc: 'broadcast to all your pm messages',
-    type: 'others'
+    type: 'broadcast'
 }, async (message, match) => {
 if(!message.reply_message.i) return await message.send("*_please reply to a message you want to broadcast_*");
 return await broadcast(message, match, "pm");
+});
+
+Alpha({
+    pattern: 'bcall ?(.*)',
+    fromMe: true,
+    desc: 'broadcast to all users',
+    type: 'broadcast'
+}, async (message, match) => {
+if(!message.reply_message.i) return await message.send("*_please reply to a message you want to broadcast_*");
+return await broadcast(message, match, "all");
+});
+
+Alpha({
+    pattern: 'bcongc ?(.*)',
+    fromMe: true,
+    desc: 'broadcast to all groups',
+    type: 'broadcast'
+}, async (message, match) => {
+if(!message.reply_message.i) return await message.send("*_please reply to a message you want to broadcast_*");
+return await broadcast(message, match, "allgroup");
 });
 
 Alpha({
@@ -28,8 +47,8 @@ Alpha({
     desc: 'creates vcf file of all users in a specified group',
     type: "others",
     onlyGroup: true,
-    fromMe: true
-}, async (message, match) => {
+    fromMe: mode
+}, async (message) => {
     const groupMetadata = await message.client.groupMetadata(message.from).catch(e => {})
     const participants = await groupMetadata.participants
     let fileContent = "";

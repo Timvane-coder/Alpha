@@ -1,8 +1,4 @@
-const {
-    Alpha,
-    personalDB,
-    lang
-} = require("../lib")
+const { Alpha, personalDB, lang } = require("../lib")
 
 Alpha({
     pattern: 'setcmd',

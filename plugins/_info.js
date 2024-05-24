@@ -2,22 +2,23 @@ const { Alpha, commands, send_alive, send_menu, lang, personalDB, mode } = requi
 const axios = require('axios')
 
 Alpha({
-	pattern: 'list',
-	desc: lang.LIST.DESC,
-	react: "💯",
-	type: 'info',
-	fromMe: mode
+    pattern: 'list',
+    desc: lang.LIST.DESC,
+    react: "💯",
+    type: 'info',
+    fromMe: mode
 }, async (message) => {
-	let count = 1,
-		list = "";
-	commands.map((cmd => {
-		if (cmd.pattern && cmd.desc) {
-			list += `${count++} *${cmd.pattern.replace(/[^a-zA-Z0-9,-]/g,"")}*\n_${cmd.desc}_\n\n`;
-		} else {
-			list += `${count++} *${cmd.pattern?cmd.pattern.replace(/[^a-zA-Z0-9,-]/g,""):''}*\n`
-		}
-	}));
-	return await message.send(list);
+    let count = 1;
+    let list = "";
+    commands.forEach((cmd) => {
+        if (cmd.pattern && !cmd.dontAddCommandList) {
+            list += `${count++} *${cmd.pattern.replace(/[^a-zA-Z0-9,-]/g, "")}*\n`;
+            if (cmd.desc) {
+                list += `_${cmd.desc}_\n\n`;
+            }
+        }
+    });
+    return await message.reply(list.trim());
 });
 
 Alpha({
@@ -54,7 +55,7 @@ Alpha({
 	desc: 'bot source script',
 	type: "info",
 	fromMe: mode
-}, async (message, match) => {   
+}, async (message) => {   
 	try {
 		const response = await axios.get(`https://api.github.com/repos/${config.REPO}`);
 		if (response.status === 200) {
