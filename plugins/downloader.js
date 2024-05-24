@@ -1,4 +1,4 @@
-const { Alpha, mode, extractUrlsFromString, tiktokdl } = require('../lib');
+const { Alpha, mode, extractUrlsFromString, tiktokdl, fbdown } = require('../lib');
 
 Alpha(
     {
@@ -28,9 +28,9 @@ Alpha(
 
 Alpha(
     {
-        pattern: 'tta ? (.*)',
+        pattern: 'fb ? (.*)',
         fromMe: mode,
-        desc: 'download audio from tiktok url',
+        desc: 'download video from fb url',
         react: '⬇️',
         type: 'downloader'
     },
@@ -40,12 +40,11 @@ Alpha(
             if (!match) return await message.reply('*_give me a url_*');
             const urls = extractUrlsFromString(match);
             if (!urls[0]) return await message.send('*_Give me a valid url_*');
-
-            let { status, audio  } = await tiktokdl(urls[0]);
-            if (!status) return await message.send('*Not Found*');
+            let { status, HD  } = await fbdown(urls[0]);
+            if (!status) return await message.reply('*Not Found*');
             await message.reply('*Downloading... ⏳*');
             await new Promise(resolve => setTimeout(resolve, 1000));
-            return await message.send( audio ,{   mimetype: "audio/mp4", ptt: true }, 'audio');
+            await message.sendReply(HD, { caption: "*Success✅*" }, 'video');
         } catch (e) {
             return message.send(e);
         }

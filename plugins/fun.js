@@ -1,8 +1,4 @@
-const {
-        Alpha,
-        mode,
-        sleep
-} = require('../lib');
+const { Alpha, mode, WCG, sleep } = require('../lib');
 const dog = ["𓃩", "𓃦", "𓃥", "𓃙", "𓃥", "𓃙", "𓃥", "𓃙", "𓃥", "𓃙", "𓃩", "𓃠"];
 const goat = ["𓃛", "𓃚", "𓃔", "𓃓", "𓃒", "𓃞", "𓃘", "𓃵", "𓃗", "𓃚", "𓃔", "𓃛", "𓃜"];
 const bird = ["𓅠", "𓅞", "𓅡", "𓅯", "𓅮", "𓅯", "𓅮", "𓅯", "𓅮", "𓅯", "𓅮", "𓅛", "𓅥", "𓅭", "𓅟"];
@@ -56,4 +52,16 @@ Alpha({
         }
         await msg.react("🕊️");
         return await msg.edit(bq[Math.floor(Math.random() * bq.length)]);
+});
+
+Alpha({
+    on: "text",
+    pattern: "wcg",
+    type: "fun",
+    desc: "Word Chain game",
+    fromMe: false,
+    onlyGroup: true
+}, async (message) => {
+    const try_to_start = new WCG(message);
+    try_to_start.start();
 });

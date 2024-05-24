@@ -17,7 +17,7 @@
     "@google/generative-ai": "^0.11.4",
     "@vitalets/google-translate-api": "^9.2.0",
     "@whiskeysockets/baileys": "6.6.0",
-    "alpha-md": "github:Primi373-creator/alpha-md",
+    "alpha-md": "latest",
     "awesome-phonenumber": "^2.64.0",
     "axios": "^0.27.2",
     "browser-id3-writer": "4.4.0",
