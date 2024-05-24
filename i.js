@@ -1,12 +1,12 @@
-const mumaker = require("mumaker")
+const { styletext } = require('./lib');
 
-async function fetchFacebookVideo() {
-  try {
-      const result = await mumaker.facebook("https://www.facebook.com/watch/?v=2018727118289093");
-      console.log(result);
-  } catch (error) {
-      console.error(error);
-  }
+async function main() {
+    try {
+        const result = await styletext('Hello');
+        console.log(result);
+    } catch (error) {
+        console.error('Error:', error.message);
+    }
 }
 
-fetchFacebookVideo();
+main();
