@@ -1,44 +1,96 @@
-const {	Alpha, isAdmin, isBotAdmin, lang, config, groupDB, poll, PREFIX } = require('../lib');
+const {	Alpha, isAdmin, isBotAdmin, lang, config, groupDB, poll, PREFIX, sleep } = require('../lib');
 const actions = ["kick", "warn", "null"];
 
 Alpha({
-	pattern: 'promote ?(.*)',
-	type: 'group',
-	fromMe: true,
-	onlyGroup: true,
-	desc: lang.GROUP.PROMOTE.DESC
+    pattern: 'promote ?(.*)',
+    type: 'group',
+    fromMe: true,
+    onlyGroup: true,
+    desc: lang.GROUP.PROMOTE.DESC
 }, async (message, match) => {
-	let admin = await isAdmin(message);
-	let BotAdmin = await isBotAdmin(message);
-	if (!BotAdmin) return await message.reply(lang.GROUP.BOT_ADMIN)
-	if (!config.ADMIN_SUDO_ACCESS && !message.isCreator) return;
-	if (!admin && !message.isCreator) return;
-	if (!message.reply_message.sender) return message.reply(lang.BASE.NEED.format("user"));
-	await message.client.groupParticipantsUpdate(message.jid,
-		[message.reply_message.sender], "promote");
-	message.send(lang.GROUP.PROMOTE.INFO.format(`@${message.reply_message.sender.split('@')[0]}`), {
-		mentions: [message.reply_message.sender]
-	})
+    let admin = await isAdmin(message);
+    let BotAdmin = await isBotAdmin(message);
+    if (!BotAdmin) return await message.reply(lang.GROUP.BOT_ADMIN);
+    if (!config.ADMIN_SUDO_ACCESS && !message.isCreator) return;
+    if (!admin && !message.isCreator) return;
+
+    if (match.toLowerCase() == 'all') {
+        const groupMetadata = await message.client.groupMetadata(message.jid).catch(e => {});
+        const participants = await groupMetadata.participants;
+        const nonAdmins = participants.filter((U) => !U.admin).map(({ id }) => id);
+        let success = true;
+        for (let participant of nonAdmins) {
+            await sleep(250); // to prevent rate limiting
+            try {
+                await message.client.groupParticipantsUpdate(message.jid, [participant], "promote");
+            } catch (e) {
+                success = false;
+            }
+        }
+        if (success) {
+            return await message.reply('All participants have been promoted!');
+        } else {
+            return await message.reply('Failed to promote some participants.');
+        }
+    } else {
+        if (!message.reply_message.sender) return message.reply(lang.BASE.NEED.format("user"));
+        try {
+            await message.client.groupParticipantsUpdate(message.jid, [message.reply_message.sender], "promote");
+            return message.send(lang.GROUP.PROMOTE.INFO.format(`@${message.reply_message.sender.split('@')[0]}`), {
+                mentions: [message.reply_message.sender]
+            });
+        } catch (e) {
+            return message.reply('Failed to promote the participant.');
+        }
+    }
 });
+
 Alpha({
-	pattern: 'demote ?(.*)',
-	type: 'group',
-	fromMe: true,
-	onlyGroup: true,
-	desc: lang.GROUP.DEMOTE.DESC
+    pattern: 'demote ?(.*)',
+    type: 'group',
+    fromMe: true,
+    onlyGroup: true,
+    desc: lang.GROUP.DEMOTE.DESC
 }, async (message, match) => {
-	let admin = await isAdmin(message);
-	let BotAdmin = await isBotAdmin(message);
-	if (!BotAdmin) return await message.reply(lang.GROUP.BOT_ADMIN)
-	if (!config.ADMIN_SUDO_ACCESS && !message.isCreator) return;
-	if (!admin && !message.isCreator) return;
-	if (!message.reply_message.sender) return message.reply(lang.BASE.NEED.format("user"));
-	await message.client.groupParticipantsUpdate(message.jid,
-		[message.reply_message.sender], "demote");
-	return await message.send(lang.GROUP.DEMOTE.INFO.format(`@${message.reply_message.sender.split('@')[0]}`), {
-		mentions: [message.reply_message.sender]
-	})
+    let admin = await isAdmin(message);
+    let BotAdmin = await isBotAdmin(message);
+    if (!BotAdmin) return await message.reply(lang.GROUP.BOT_ADMIN);
+    if (!config.ADMIN_SUDO_ACCESS && !message.isCreator) return;
+    if (!admin && !message.isCreator) return;
+
+    if (match.toLowerCase() == 'all') {
+        const groupMetadata = await message.client.groupMetadata(message.jid).catch(e => {});
+        const participants = await groupMetadata.participants;
+        const admins = participants.filter((U) => U.admin).map(({ id }) => id);
+        
+        let success = true;
+        for (let participant of admins) {
+            await sleep(250); // to prevent rate limiting
+            try {
+                await message.client.groupParticipantsUpdate(message.jid, [participant], "demote");
+            } catch (e) {
+                success = false;
+            }
+        }
+
+        if (success) {
+            return await message.reply('All admins have been demoted!');
+        } else {
+            return await message.reply('Failed to demote some admins.');
+        }
+    } else {
+        if (!message.reply_message.sender) return message.reply(lang.BASE.NEED.format("user"));
+        try {
+            await message.client.groupParticipantsUpdate(message.jid, [message.reply_message.sender], "demote");
+            return message.send(lang.GROUP.DEMOTE.INFO.format(`@${message.reply_message.sender.split('@')[0]}`), {
+                mentions: [message.reply_message.sender]
+            });
+        } catch (e) {
+            return message.reply('Failed to demote the participant.');
+        }
+    }
 });
+
 Alpha({
 	pattern: 'kick ?(.*)',
 	type: 'group',
@@ -74,9 +126,10 @@ Alpha({
 			await message.client.groupParticipantsUpdate(message.jid,
 				[k], "remove");
 		});
-		return await message.reply('all group Participants will been kicked!')
+		return await message.reply('all group Participants has been kicked!')
 	}
 });
+
 Alpha({
 	pattern: 'add ?(.*)',
 	type: 'group',
@@ -575,7 +628,7 @@ Alpha(
 		  : 1;
 		await groupDB(["warn"],{ jid: message.jid, content: { [message.reply_message.number]: { count,}, }, }, "add", );
 		const remains = config.WARNCOUNT - count;
-		let warnmsg = `⚠️ WARNING ⚠️\nUser: @${message.reply_message.number}\n------------------\nℹ️ INFO ℹ️\nReason: ${reason}\nCount: ${count}\nRemaining: ${remains}`;
+		let warnmsg = `⚠️ *WARNING* ⚠️\n*User:* @${message.reply_message.number}\n------------------\nℹ️ INFO ℹ️\n*Reason:* ${reason}\n*Count:* ${count}\n*Remaining:* ${remains}`;
 		await message.send(warnmsg, {
 		  mentions: [message.reply_message.sender],
 		});
@@ -599,9 +652,7 @@ Alpha(
 	  onlyGroup: true,
 	},
 	async (message, match) => {
-	  if (
-		message.reply_message.i &&
-		message.reply_message.type == "pollCreationMessage"
+	  if ( message.reply_message.i && message.reply_message.type == "pollCreationMessage"
 	  ) {
 		const { status, res, total } = await poll(message.reply_message.data);
 		if (!status) return await message.send("*Not Found*");
@@ -621,9 +672,7 @@ Alpha(
 		.replace(PREFIX, "")
 		.trim();
 	  if (!match || !match.split(/[,|;]/))
-		return await message.send(
-		  `_*Example:* ${PREFIX}poll title |option1|option2|option3..._\n_*get a poll result:* ${PREFIX}poll_\n_reply to a poll message to get its result_`,
-		);
+		return await message.reply(`_*Example:* ${PREFIX}poll title |option1|option2|option3..._\n_*get a poll result:* ${PREFIX}poll_\n_reply to a poll message to get its result_`,);
 	  const options = match.split(/[,|;]/).slice(1);
 	  const { participants } = await message.client.groupMetadata(message.jid);
 	  return await message.send(
