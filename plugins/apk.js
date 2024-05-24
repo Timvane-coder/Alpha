@@ -1,4 +1,5 @@
-const { Alpha, mode, getJson, config } = require('../lib');
+const { Alpha, mode} = require('../lib');
+const { download, search } = require('aptoide-scraper');
 
 Alpha({
 	pattern: 'dapk ?(.*)',
@@ -10,80 +11,40 @@ Alpha({
 	if (!match) return await message.reply("*please give me an application name*");
 	if (match) {
 		match = match
-		const res = await getJson(`${config.BASE_URL}api/dowloader/apk?text=${match}&apikey=${config.ALPHA_KEY}`);
-		if (!res.status) return await message.reply(`file not found or  apikey limit has been exceeded. Visit ${config.BASE_URL}signup for gettig a new apikey. setvar alpha_key: your apikey`);
+		const res = await download(match);
 		await new Promise(resolve => setTimeout(resolve, 1000));
-		await message.sendReply(res.result.icon, { caption: `*Name*: \`${res.result.name}\`\n*Updated*: ${res.result.lastup}\n*Package*: ${res.result.package}\n*Size*: ${res.result.size}` }, 'image');
+		await message.sendReply(res.icon, { caption: `*Name*: \`${res.name}\`\n*Updated*: ${res.lastup}\n*Package*: ${res.package}\n*Size*: ${res.size}` }, 'image');
 		await new Promise(resolve => setTimeout(resolve, 1000));
 		return await message.send({
-			url: res.result.dllink
+			url: res.dllink
 		}, {
 			mimetype: `application/vnd.android.package-archive`,
-			fileName: res.result.name + '.apk'
+			fileName: res.name + '.apk'
 		}, 'document')
 	}
 });
 
-
-let listeningForSAPK = false;
-let selectedAppInfo = null;
-
 Alpha({
-    pattern: 'sapk ?(.*)',
-    type: 'search',
-    desc: 'search and download  apk files',
+    pattern: 'apk ?(.*)',
+    type: 'downloader',
+    desc: 'search and download apk files',
     fromMe: mode
 }, async (message, match) => {
     match = match || message.reply_message.text;
     if (!match) return await message.reply('*please provide a search query*');
-    const res = await getJson(`${config.BASE_URL}api/search/apk?text=${match}&apikey=${config.ALPHA_KEY}`);
-    if (!res.status) return await message.reply('No results found.');
-    const results = res.result;
-    if (results.length === 0) return await message.reply('No results found.');
-    let replyMsg = '*Search Results:*\n';
-    results.forEach((app, index) => {
-        replyMsg += `${index + 1}. ${app.name}\n`;
-    });
-    replyMsg += '*Reply with the number to download the corresponding APK file.*\n*or use 0 to cancel download*';
-    await message.reply(replyMsg);
-    listeningForSAPK = true;
-    selectedAppInfo = results;
-});
-
-Alpha({
-    on: 'text',
-    fromMe: mode
-}, async (message, match) => {
-    if (!listeningForSAPK) return;
-    if (!message.reply_message?.fromMe || !message.reply_message?.text) return;
-	if (!message.reply_message.text.includes('*Reply with the number to download the corresponding APK file.*\n*or use 0 to cancel download*')) return;
-    if (selectedAppInfo && selectedAppInfo.length > 0 && !isNaN(parseInt(message.body))) {
-        const selection = parseInt(message.body)
-        if (selection === 0) { 
-            await message.reply("*Download canceled.*");
-            listeningForSAPK = false;
-        } else 	if (selection >= 1 && selection <= selectedAppInfo.length) {
-            const selectedApp = selectedAppInfo[selection - 1];
-            const downloadRes = await getJson(`${config.BASE_URL}api/dowloader/apk?text=${selectedApp.name}&apikey=${config.ALPHA_KEY}`);
-            if (!downloadRes.status) {
-                await message.reply(`*Error downloading ${selectedApp.name}: API key limit exceeded.*`);
-                return;
-            }
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            await message.sendReply(downloadRes.result.icon, {
-                caption: `*Name*: \`${selectedApp.name}\`\n*Package*: \`${selectedApp.id}\``
-            }, 'image');
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            await message.send({
-                url: downloadRes.result.dllink
-            }, {
-                mimetype: 'application/vnd.android.package-archive',
-                fileName: selectedApp.name + '.apk'
-            }, 'document');
-            listeningForSAPK = false;
-            selectedAppInfo = null;
-        } else {
-            await message.reply(`*Invalid selection. Please enter a valid number. Please enter a number from 1 to ${selectedAppInfo.length}.*`);
-        }
-    }
+    const res = await search(match);
+    if (res.length === 0) return await message.reply('No results found.');
+    const values = res.splice(0, 10).map((app) => ({
+        name: app.name,
+        id: `dapk ${app.name}`
+    }));
+console.log(values)
+    return await message.send({
+        name: '*APK DOWNLOADER*',
+        values: values,
+        withPrefix: true,
+        onlyOnce: false,
+        participates: [message.sender],
+        selectableCount: true
+    }, {}, 'poll');
 });

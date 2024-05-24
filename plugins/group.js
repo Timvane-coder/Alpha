@@ -645,7 +645,7 @@ Alpha(
 
   Alpha(
 	{
-	  pattern: "vote|poll ?(.*)",
+	  pattern: "vote ?(.*)",
 	  desc: "create a poll message",
 	  fromMe: true,
 	  type: "group",
@@ -672,7 +672,7 @@ Alpha(
 		.replace(PREFIX, "")
 		.trim();
 	  if (!match || !match.split(/[,|;]/))
-		return await message.reply(`_*Example:* ${PREFIX}poll title |option1|option2|option3..._\n_*get a poll result:* ${PREFIX}poll_\n_reply to a poll message to get its result_`,);
+		return await message.reply(`_*Example:* ${PREFIX}vote title |option1|option2|option3..._\n_*get a poll result:* ${PREFIX}vote_\n_reply to a poll message to get its result_`,);
 	  const options = match.split(/[,|;]/).slice(1);
 	  const { participants } = await message.client.groupMetadata(message.jid);
 	  return await message.send(
