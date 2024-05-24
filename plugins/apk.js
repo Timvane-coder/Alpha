@@ -5,6 +5,7 @@ Alpha({
 	pattern: 'dapk ?(.*)',
 	type: "downloader",
 	desc: "download applications from aptoid",
+    dontAddCommandList: true,
 	fromMe: mode
 }, async (message, match) => {
 	match = match || message.reply_message.text;
