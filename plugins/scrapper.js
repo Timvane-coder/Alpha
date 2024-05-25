@@ -38,16 +38,7 @@ Alpha({
         return await message.send(GenListMessage(lang.SCRAP.RING_LIST, res));
 });   
 
-Alpha({
-    pattern: 'weather',
-    fromMe: mode,
-    desc: lang.SCRAP.WEATHER_DESC,
-    react : "🔥",
-    type: "search"
-}, async (message, match) => {
-    if(!match) return await m.send(lang.SCRAP.NEED_PLACE)
-        return await weather(message);
-});
+
 
 Alpha({
     on: "text",

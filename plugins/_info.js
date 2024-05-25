@@ -1,5 +1,8 @@
-const { Alpha, commands, send_alive, send_menu, lang, personalDB, mode } = require('../lib')
+const { Alpha, commands, send_alive, send_menu, lang, personalDB, mode, config } = require('../lib')
 const axios = require('axios')
+const { runtime } = require("../lib/main/func");
+const info = config.BOT_INFO
+const parts = info.split(';')
 
 Alpha({
     pattern: 'list',
@@ -104,4 +107,32 @@ Alpha({
 			const options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric'};
 			const setAt = date.toLocaleString('en-US', options);
 			await message.send({ url: pp }, { caption: `*Name :* ${await message.getName(user)}\n*About :* ${status.status}\n*About Set Date :* ${setAt}`, quoted: message.data }, 'image')
-})
+});
+
+Alpha(
+    {
+      pattern: "uptime",
+      type: "info",
+      desc: "shows bot uptime.",
+      fromMe: mode,
+    },
+    async (message, match) => {
+      const upt = runtime(process.uptime());
+      const uptt = `Beep boop... System status: Fully operational!\n*Current uptime: ${upt}*`;
+  
+      let fileType = 'unknown';
+  
+      if (parts[2].endsWith('.jpg') || parts[2].endsWith('.png')) {
+        fileType = 'image';
+      } else if (parts[2].endsWith('.mp4')) {
+        fileType = 'video';
+      } 
+  
+      if (fileType === 'image') {
+        await message.send({ url: parts[2] }, { caption: uptt }, "image");
+      } else if (fileType === 'video') {
+        await message.sendReply(parts[2], { caption: uptt }, 'video');
+      }
+    },
+  );
+  

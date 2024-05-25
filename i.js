@@ -1,27 +1,24 @@
+// main.js
+const { getLyrics } = require('./lib/lyrics');
 
-function twitter(url) {
-  return new Promise((resolve, reject) => {
-    let data = {
-      'URL': url
-    };
-    axios.post("https://twdown.net/download.php", qs.stringify(data), {
-      'headers': {
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-        'sec-ch-ua': "\" Not;A Brand\";v=\"99\", \"Google Chrome\";v=\"91\", \"Chromium\";v=\"91\"",
-        'user-agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        'cookie': "_ga=GA1.2.1388798541.1625064838; _gid=GA1.2.1351476739.1625064838; __gads=ID=7a60905ab10b2596-229566750eca0064:T=1625064837:RT=1625064837:S=ALNI_Mbg3GGC2b3oBVCUJt9UImup-j20Iw; _gat=1"
-      }
-    }).then(({ data }) => {
-      const $ = cheerio.load(data);
-      let title = $("div:nth-child(1) > div:nth-child(2) > p").text().trim();
-      let hd_url = $("tbody > tr:nth-child(1) > td:nth-child(4) > a").attr('href');
-      let sd_url = $("tr:nth-child(2) > td:nth-child(4) > a").attr("href");
-      resolve({
-        'title': title,
-        'url': [{ 'hd': hd_url }, { 'sd': sd_url }]
-      });
-    }).catch(error => {
-      reject(error);
-    });
-  });
+async function fetchLyrics(songName) {
+    try {
+        const result = await getLyrics(songName);
+        if (result.status === 200) {
+            console.log('Lyrics fetched successfully!');
+            console.log(`URL: ${result.url}`);
+            console.log(`Album: ${result.album}`);
+            console.log(`Artist: ${result.artist}`);
+            console.log(`Release Date: ${result.release_date}`);
+            console.log(`Thumbnail: ${result.thumbnail}`);
+            console.log('Lyrics:', result.lyrics);
+        } else {
+            console.log('Error fetching lyrics:', result.message);
+        }
+    } catch (error) {
+        console.error('An error occurred:', error);
+    }
 }
+
+// Call the async function
+fetchLyrics('nf why');

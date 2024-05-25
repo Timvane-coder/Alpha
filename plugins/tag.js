@@ -3,7 +3,7 @@ const { Alpha, lang, addSpace } = require('../lib');
 Alpha({
     pattern: 'tag ?(.*)',
     desc: lang.TAG_DESC,
-    type: "owner",
+    type: "group",
     onlyGroup :true,
     fromMe: true
 }, async (message, match) => {

@@ -1,4 +1,4 @@
-const { Alpha, mode, sendPhoto, sendVoice, sendGif, sendBassAudio, sendSlowAudio, sendBlownAudio, sendDeepAudio, sendErrapeAudio, sendFastAudio, sendFatAudio, sendNightcoreAudio, sendReverseAudio, sendSquirrelAudio, toAudio, toPTT, toVideo, AudioMetaData, lang, config } = require('../lib');
+const { Alpha, mode, sendPhoto, TTS, sendUrl, sendGif, sendBassAudio, sendSlowAudio, sendBlownAudio, sendDeepAudio, sendErrapeAudio, sendFastAudio, sendFatAudio, sendNightcoreAudio, sendReverseAudio, sendSquirrelAudio, toAudio, toPTT, toVideo, AudioMetaData, lang, config } = require('../lib');
 const { fromBuffer } = require('file-type');
 
 Alpha({
@@ -168,4 +168,37 @@ Alpha({
     const media = await message.reply_message.download(),
     { ext, mime } = await fromBuffer(media);
     return await message.client.sendMessage(message.jid,{document:media,mimetype:mime,fileName: match+"."+ext},{quoted: message});
+});
+
+
+Alpha({
+    pattern: 'tts',
+    fromMe: mode,
+    desc: lang.TTS_DESC,
+    react: "💔",
+    type: "converter"
+}, async (message, match) => {
+        match = match || message.reply_message.text;
+        if (!match) return await message.send(lang.BASE.TEXT);
+        let slang = match.match('\\{([a-z]+)\\}');
+        let lang = "en";
+        if (slang) {
+            lang = slang[1];
+            match = match.replace(slang[0], '');
+        }
+        return await message.send(await TTS(match,lang),{
+            mimetype: 'audio/ogg; codecs=opus',
+            ptt: false
+        },'audio');
+});
+
+Alpha({
+    pattern: 'url',
+    desc: lang.GENERAL.URL_DESC,
+    react: "⛰️",
+    fromMe: mode,
+    type: "converter"
+}, async (message, match) => {
+    if (!message.isMedia) return message.reply(lang.BASE.NEED.format('image/sticker/video/audio'));
+    return await sendUrl(message, message.client);
 });

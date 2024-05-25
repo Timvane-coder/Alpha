@@ -125,7 +125,7 @@ Alpha({
 	fromMe: mode,
 	desc: lang.USER.JID,
 	react: "💯",
-	type: "misc"
+	type: "whatsapp"
 }, async (message) => {
 	if (message.reply_message.sender) {
 		await message.send(message.reply_message.sender)
