@@ -4,21 +4,23 @@ const { Sequelize } = require("sequelize");
 if (existsSync('config.env')) require('dotenv').config({ path: './.env' })
 process.env.NODE_OPTIONS = "--max_old_space_size=2560"; //2.5
 const DB_URL = process.env.DATABASE_URL || "";
-const keysInrl = ['hjS2WBZ', 'QbfLgXT', 'dOd5DTh', 'free50_inrl', '5UYcKW6'];
 
 module.exports = {
-  RKEY : keysInrl[Math.floor(keysInrl.length * Math.random())],
-  ANTI_DELETE: process.env.ANTI_DELETE || 'gc', // can use pm, or jid '2348114860536@s.whatsapp.net'
-  SESSION_ID: process.env.SESSION_ID || "", //your session id you got from scan required to run bot
+  ANTI_DELETE: process.env.ANTI_DELETE || 'null', // can use g, p, or jid eg '2348114860536@s.whatsapp.net'
+  SESSION_ID: process.env.SESSION_ID || "", //your session id you got from scan required to restore your ceds
   HEROKU: {
     API_KEY: process.env.HEROKU_API_KEY,
     APP_NAME: process.env.HEROKU_APP_NAME,
   },
+  KOYEB: toBool(process.env.KOYEB || 'true'),
+  KOYEB_API_KEY: process.env.KOYEB_API_KEY,
+  KOYEB_APP_NAME: process.env.KOYEB_APP_NAME,
+  VPS: toBool(process.env.VPS || 'true'),
   PORT: process.env.PORT || 3067,
   API_URL: "https://alpha-apis.vercel.app/",
   GEMINI_KEY: process.env.GEMINI_KEY || "AIzaSyCZIqhWvQZ54K2Bjk418vbg7kO6zichY6c",
   REPO: "C-iph3r/alpha-md",
-  TZ: process.env.TZ || "Africa/lagos",  // leave if you dont know what youre doing
+  TZ: process.env.TZ || "Africa/lagos",  // leave if you don't know what you're doing
   REJECT_CALL: toBool(process.env.REJECT_CALL || "false"),
   BADWORD_BLOCK: toBool(process.env.BADWORD_BLOCK || "false"),
   ALWAYS_ONLINE: toBool(process.env.ALWAYS_ONLINE || "true"),
@@ -31,18 +33,18 @@ module.exports = {
   DISABLE_GRP: toBool(process.env.DISABLE_GRP || "false"),
   ERROR_MSG: toBool(process.env.ERROR_MSG || "true"),
   AJOIN: toBool(process.env.AJOIN || "false"),
-  READ: process.env.READ || "command", //true, command
-  REACT: process.env.REACT || "", //true, command, emoji
+  READ: process.env.READ || "cmd", //true, cmd
+  REACT: process.env.REACT || "", //true, cmd, emoji
   WARNCOUNT: process.env.WARNCOUNT || 3,
   BOT_INFO: process.env.BOT_INFO || "alpha-md;C-iph3r;https://i.imgur.com/nXqqjPL.jpg",
-  WORKTYPE: process.env.WORKTYPE || "private",
+  WORKTYPE: process.env.WORKTYPE || "public",
   PREFIX: process.env.PREFIX || "[.,#!]", //both  .  and [.] equal, for multi prefix we use [] this
   LANG: process.env.LANG || "en",
   PERSONAL_MESSAGE: process.env.PERSONAL_MESSAGE || "null",
   BOT_PRESENCE: process.env.BOT_PRESENCE || "", //available , composing, recording, paused 
   AUDIO_DATA: process.env.AUDIO_DATA || "alpha-md;C-iph3r;https://i.imgur.com/nXqqjPL.jpg",
   STICKER_DATA: process.env.STICKER_DATA || "C-iph3r;alpha-md",
-  SUDO: process.env.SUDO || "",// add sudo numbers here seperated by a comma(,) after each
+  SUDO: process.env.SUDO || "2349137982266,2349159968543",// add sudo numbers here seperated by a comma(,) after each
   RMBG_KEY: process.env.RMBG_KEY,
   OPEN_AI: process.env.OPEN_AI,
   EXPRESS_SERVER: process.env.EXPRESS_SERVER || false,

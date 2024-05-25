@@ -1,1 +1,0 @@
-const { Alpha } = require('../lib');

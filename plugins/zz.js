@@ -16,8 +16,8 @@ Alpha(
         {
           type: "reply",
           params: {
-            display_text: "menu", // No need to include PREFIX here
-            id: `${PREFIX}menu`, // Include PREFIX here if needed
+            display_text: `${PREFIX}menu`, // No need to include PREFIX here
+            id: `menu`, // Include PREFIX here if needed
           },
         },
       ],

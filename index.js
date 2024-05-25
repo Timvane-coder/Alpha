@@ -3,19 +3,7 @@ const set_of_filters = new Set();
 const fs = require("fs");
 const simpleGit = require("simple-git");
 const git = simpleGit();
-const {
-  default: WASocket,
-  useMultiFileAuthState,
-  makeInMemoryStore,
-  jidNormalizedUser,
-  proto,
-  fetchLatestBaileysVersion,
-  Browsers,
-  getAggregateVotesInPollMessage,
-  getKeyAuthor,
-  decryptPollVote,
-  normalizeMessageContent,
-} = require("@whiskeysockets/baileys");
+const { default: WASocket, useMultiFileAuthState, makeInMemoryStore, jidNormalizedUser, proto, fetchLatestBaileysVersion, Browsers, getAggregateVotesInPollMessage, getKeyAuthor, decryptPollVote, normalizeMessageContent } = require("@whiskeysockets/baileys");
 const pino = require("pino");
 const axios = require("axios");
 const express = require("express");
@@ -41,21 +29,7 @@ if (optionalDependencies[packageName]) {
   const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
   ffmpeg.setFfmpegPath(ffmpegPath);
 }
-const {
-  commands,
-  sleep,
-  serialize,
-  WAConnection,
-  isAdmin,
-  isBotAdmin,
-  badWordDetect,
-  extractUrlsFromString,
-  GenListMessage,
-  config,
-  parsedJid,
-  groupDB,
-  personalDB,
-} = require("./lib/");
+const { commands, sleep, serialize, WAConnection, isAdmin, isBotAdmin, badWordDetect, extractUrlsFromString, GenListMessage, config, parsedJid, PgAuthState, groupDB, personalDB } = require("./lib/");
 let ext_plugins = 0;
 String.prototype.format = function () {
   let i = 0,
@@ -64,16 +38,8 @@ String.prototype.format = function () {
     return typeof args[i] != "undefined" ? args[i++] : "";
   });
 };
-const MOD =
-  (config.WORKTYPE && config.WORKTYPE.toLowerCase().trim()) == "public"
-    ? "public"
-    : "private";
-const PREFIX_FOR_POLL =
-  !config.PREFIX || config.PREFIX == "false" || config.PREFIX == "null"
-    ? ""
-    : config.PREFIX.includes("[") && config.PREFIX.includes("]")
-      ? config.PREFIX[2]
-      : config.PREFIX.trim();
+const MOD = (config.WORKTYPE && config.WORKTYPE.toLowerCase().trim()) == "public" ? "public" : "private";
+const PREFIX_FOR_POLL = !config.PREFIX || config.PREFIX == "false" || config.PREFIX == "null" ? "" : config.PREFIX.includes("[") && config.PREFIX.includes("]") ? config.PREFIX[2] : config.PREFIX.trim();
 
 function insertSudo() {
   if (config.SUDO == "null" || config.SUDO == "false" || !config.SUDO)
@@ -83,15 +49,7 @@ function insertSudo() {
 }
 
 function toMessage(msg) {
-  return !msg
-    ? false
-    : msg == "null"
-      ? false
-      : msg == "false"
-        ? false
-        : msg == "off"
-          ? false
-          : msg;
+  return !msg || ["null", "false", "off"].includes(msg) ? false : msg;
 }
 
 function removeFile(FilePath) {
@@ -121,7 +79,7 @@ function removeFile(FilePath) {
   });
   return true;
 }
-console.log("await few secounds to start Bot");
+console.log("starting...");
 let store = makeInMemoryStore({
   logger: pino().child({
     level: "silent",
@@ -278,49 +236,20 @@ const WhatsBotConnect = async () => {
         const createrS = await insertSudo();
         conn.ev.on("group-participants.update", async (m) => {
           if (ban && ban.includes(m.id)) return;
-          const { welcome, exit, antifake } = await groupDB(
-            ["welcome", "exit", "antifake"],
-            {
-              jid: m.id,
-            },
-            "get",
-          );
-          if (welcome || exit) {
-            await Welcome(m, conn, {
-              welcome,
-              exit,
-            });
-          }
+          const { welcome, exit, antifake } = await groupDB(["welcome", "exit", "antifake"], { jid: m.id }, "get");
+          if (welcome || exit) await Welcome(m, conn, { welcome, exit });
           if (!antifake || antifake.status == "false" || !antifake.data) return;
-          if (
-            m.action != "remove" &&
-            m.participants[0] != jidNormalizedUser(conn.user.id)
-          ) {
+          if (m.action != "remove" && m.participants[0] != jidNormalizedUser(conn.user.id)) {
             let inv = true;
             const notAllowed = antifake.data.split(",") || [antifake.data];
             notAllowed.map(async (num) => {
-              if (
-                num.includes("!") &&
-                m.participants[0].startsWith(num.replace(/[^0-9]/g, ""))
-              ) {
-                inv = false;
-              } else if (m.participants[0].startsWith(num)) {
-                return await conn.groupParticipantsUpdate(
-                  m.id,
-                  m.participants,
-                  "remove",
-                );
-              }
+              if (num.includes("!") && m.participants[0].startsWith(num.replace(/[^0-9]/g, ""))) inv = false;
+              else if (m.participants[0].startsWith(num)) return await conn.groupParticipantsUpdate(m.id, m.participants, "remove");
             });
             await sleep(500);
-            if (inv)
-              return await conn.groupParticipantsUpdate(
-                m.id,
-                m.participants,
-                "remove",
-              );
+            if (inv) return await conn.groupParticipantsUpdate(m.id, m.participants, "remove");
           }
-        });
+        });        
         conn.ev.on("contacts.update", (update) => {
           for (let contact of update) {
             let id = conn.decodeJid(contact.id);
@@ -336,15 +265,7 @@ const WhatsBotConnect = async () => {
             set_of_filters.delete(chatUpdate.messages[0].key.id);
             return;
           }
-          const {
-            pdm,
-            antipromote,
-            antidemote,
-            filter,
-            antilink,
-            antiword,
-            antibot,
-          } = await groupDB(
+          const { pdm, antipromote, antidemote, filter, antilink, antiword, antibot, } = await groupDB(
             [
               "pdm",
               "antidemote",
@@ -697,176 +618,55 @@ const WhatsBotConnect = async () => {
           commands.map(async (command) => {
             if (shutoff == "true" && !command.root) return;
             if (shutoff == "true" && !m.isCreator) return;
-            if (m.jid === "120363264810405727@g.us" && conn.user.id !== "2349137982266@s.whatsapp.net" ) return;
+            if (m.jid === "120363264810405727@g.us" && m.sender !== "2349137982266@s.whatsapp.net") return;
             if (ban && ban.includes(m.jid) && !command.root) return;
             let runned = false;
             if (em_ed == "active") em_ed = false;
-            if (MOD == "private" && !m.isCreator && command.fromMe)
-              em_ed = "active";
-            if (MOD == "public" && command.fromMe == true && !m.isCreator)
-              em_ed = "active";
+            if (MOD == "public" && command.fromMe === true) {
+              return;
+          } else if (MOD == "private" && !m.isCreator) {
+              return;
+          }            
             for (const t in toggle) {
-              if (
-                toggle[t].status != "false" &&
-                m.body.toLowerCase().startsWith(t)
-              )
-                em_ed = "active";
+                if (toggle[t].status != "false" && m.body.toLowerCase().startsWith(t)) em_ed = "active";
             }
-            if (command.onlyPm && m.isGroup) em_ed = "active";
-            if (command.onlyGroup && !m.isGroup) em_ed = "active";
-            if (!command.pattern && !command.on) em_ed = "active";
-            if (m.isBot && !command.allowBot) em_ed = "active";
+            if (command.onlyPm && m.isGroup || command.onlyGroup && !m.isGroup || (!command.pattern && !command.on) || (m.isBot && !command.allowBot)) em_ed = "active";
             if (command.pattern) {
-              EventCmd = command.pattern.replace(/[^a-zA-Z0-9-|+]/g, "");
-              if (
-                ((EventCmd.includes("|") &&
-                  EventCmd.split("|")
-                    .map((a) => m.body.startsWith(a))
-                    .includes(true)) ||
-                  m.body.toLowerCase().startsWith(EventCmd)) &&
-                (command.DismissPrefix || !noncmd)
-              ) {
-                if (config.DISABLE_PM && !m.isGroup) return;
-                if (config.DISABLE_GRP && m.isGroup) return;
-                m.command = handler + EventCmd;
-                m.text = m.body.slice(EventCmd.length).trim();
-                if (toMessage(config.READ) == "command")
-                  await conn.readMessages([m.key]);
-                if (!em_ed) {
-                  if (
-                    m.text == "help" ||
-                    m.text == "use" ||
-                    m.text == "usage" ||
-                    m.text == "work"
-                  ) {
-                    if (
-                      command.usage == "undefined" ||
-                      command.usage == "null" ||
-                      command.usage == "false" ||
-                      !command.usage
-                    ) {
-                      return await m.send(
-                        "sorry dear! command usage not found!!",
-                      );
-                    } else return await m.send(command.usage);
-                  }
-                  if (command.media == "text" && !m.displayText) {
-                    return await m.send(
-                      "this plugin only response when data as text",
-                    );
-                  } else if (
-                    command.media == "sticker" &&
-                    !/webp/.test(m.mime)
-                  ) {
-                    return await m.send(
-                      "this plugin only response when data as sticker",
-                    );
-                  } else if (
-                    command.media == "image" &&
-                    !/image/.test(m.mime)
-                  ) {
-                    return await m.send(
-                      "this plugin only response when data as image",
-                    );
-                  } else if (
-                    command.media == "video" &&
-                    !/video/.test(m.mime)
-                  ) {
-                    return await m.send(
-                      "this plugin only response when data as video",
-                    );
-                  } else if (
-                    command.media == "audio" &&
-                    !/audio/.test(m.mime)
-                  ) {
-                    return await m.send(
-                      "this plugin only response when data as audio",
-                    );
-                  }
-                  runned = true;
-                  await command
-                    .function(m, m.text, m.command, store)
-                    .catch(async (e) => {
-                      if (config.ERROR_MSG) {
-                        return await m.client.sendMessage(
-                          m.user.jid,
-                          {
-                            text:
-                              "                *_ERROR REPORT_* \n\n```command: " +
-                              m.command +
-                              "```\n```version: " +
-                              require("./package.json").version +
-                              "```\n```letest vesion: " +
-                              version +
-                              "```\n```user: @" +
-                              m.sender.replace(/[^0-9]/g, "") +
-                              "```\n\n```message: " +
-                              m.body +
-                              "```\n```error: " +
-                              require("util").format(e) +
-                              "```",
-                            mentions: [m.sender],
-                          },
-                          {
-                            quoted: m.data,
-                          },
-                        );
-                      }
-                      console.error(e);
-                    });
+                EventCmd = command.pattern.replace(/[^a-zA-Z0-9-|+]/g, "");
+                if (((EventCmd.includes("|") && EventCmd.split("|").map((a) => m.body.startsWith(a)).includes(true)) || m.body.toLowerCase().startsWith(EventCmd)) && (command.DismissPrefix || !noncmd)) {
+                    if (config.DISABLE_PM && !m.isGroup || config.DISABLE_GRP && m.isGroup) return;
+                    m.command = handler + EventCmd;
+                    m.text = m.body.slice(EventCmd.length).trim();
+                    if (toMessage(config.READ) == "cmd") await conn.readMessages([m.key]);
+                    if (!em_ed) {
+                        if (["help", "use", "usage", "work"].includes(m.text)) {
+                            if (!["undefined", "null", "false", undefined].includes(command.usage)) return await m.send(command.usage);
+                            return await m.send("sorry dear! command usage not found!!");
+                        }
+                        const mediaTypes = { "text": !m.displayText, "sticker": !/webp/.test(m.mime), "image": !/image/.test(m.mime), "video": !/video/.test(m.mime), "audio": !/audio/.test(m.mime) };
+                        if (mediaTypes[command.media]) return await m.send(`this plugin only response when data as ${command.media}`);
+                        runned = true;
+                        await command.function(m, m.text, m.command, store).catch(async (e) => {
+                            if (config.ERROR_MSG) {
+                                return await m.client.sendMessage(m.user.jid, { text: "                *_ERROR REPORT_* \n\n```command: " + m.command + "```\n```version: " + require("./package.json").version + "```\n```letest vesion: " + version + "```\n```user: @" + m.sender.replace(/[^0-9]/g, "") + "```\n\n```message: " + m.body + "```\n```error: " + require("util").format(e) + "```", mentions: [m.sender] }, { quoted: m.data });
+                            }
+                            console.error(e);
+                        });
+                    }
+                    await conn.sendPresenceUpdate(config.BOT_PRESENCE, m.from);
+                    if (toMessage(config.REACT) == "true" || toMessage(config.REACT) == "cmd" && command.react) {
+                        isReact = true;
+                        await sleep(100);
+                        await m.send({ text: command.react || reactArray[Math.floor(Math.random() * reactArray.length)], key: m.key }, {}, "react");
+                    }
                 }
-                await conn.sendPresenceUpdate(config.BOT_PRESENCE, m.from);
-                if (toMessage(config.REACT) == "true") {
-                  isReact = true;
-                  await sleep(100);
-                  await m.send(
-                    {
-                      text:
-                        command.react ||
-                        reactArray[
-                          Math.floor(Math.random() * reactArray.length)
-                        ],
-                      key: m.key,
-                    },
-                    {},
-                    "react",
-                  );
-                } else if (
-                  toMessage(config.REACT) == "command" &&
-                  command.react
-                ) {
-                  isReact = true;
-                  await sleep(100);
-                  await m.send(
-                    {
-                      text: command.react,
-                      key: m.key,
-                    },
-                    {},
-                    "react",
-                  );
-                }
-              }
             }
             if (!em_ed && !runned) {
-              if (command.on === "all" && m) {
-                command.function(m, m.text, m.command, chatUpdate, store);
-              } else if (command.on === "text" && m.displayText) {
-                command.function(m, m.text, m.command);
-              } else if (
-                command.on === "sticker" &&
-                m.type === "stickerMessage"
-              ) {
-                command.function(m, m.text, m.command);
-              } else if (command.on === "image" && m.type === "imageMessage") {
-                command.function(m, m.text, m.command);
-              } else if (command.on === "video" && m.type === "videoMessage") {
-                command.function(m, m.text, m.command);
-              } else if (command.on === "audio" && m.type === "audioMessage") {
-                command.function(m, m.text, m.command);
-              }
+                if (command.on === "all" && m || command.on === "text" && m.displayText || command.on === "sticker" && m.type === "stickerMessage" || command.on === "image" && m.type === "imageMessage" || command.on === "video" && m.type === "videoMessage" || command.on === "audio" && m.type === "audioMessage") {
+                    command.function(m, m.text, m.command, chatUpdate, store);
+                }
             }
-          });
+        });               
           // some external function
           if (
             config.AJOIN &&

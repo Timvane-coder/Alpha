@@ -39,7 +39,6 @@ Alpha({
         name: app.name,
         id: `dapk ${app.name}`
     }));
-console.log(values)
     return await message.send({
         name: '*APK DOWNLOADER*',
         values: values,
