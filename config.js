@@ -28,7 +28,7 @@ module.exports = {
   CALL_BLOCK: toBool(process.env.CALL_BLOCK || "false"),
   STATUS_VIEW: process.env.STATUS_VIEW || "true",
   SAVE_STATUS: toBool(process.env.SAVE_STATUS || "false"),
-  ADMIN_SUDO_ACCESS: toBool(process.env.ADMIN_SUDO_ACCESS || "false"),
+  ADMIN_SUDO_ACCESS: toBool(process.env.ADMIN_SUDO_ACCESS || "true"),
   DISABLE_PM: toBool(process.env.DISABLE_PM || "false"),
   DISABLE_GRP: toBool(process.env.DISABLE_GRP || "false"),
   ERROR_MSG: toBool(process.env.ERROR_MSG || "true"),
@@ -37,7 +37,7 @@ module.exports = {
   REACT: process.env.REACT || "", //true, cmd, emoji
   WARNCOUNT: process.env.WARNCOUNT || 3,
   BOT_INFO: process.env.BOT_INFO || "alpha-md;C-iph3r;https://i.imgur.com/nXqqjPL.jpg",
-  WORKTYPE: process.env.WORKTYPE || "public",
+  WORKTYPE: process.env.WORKTYPE || "private",
   PREFIX: process.env.PREFIX || "[.,#!]", //both  .  and [.] equal, for multi prefix we use [] this
   LANG: process.env.LANG || "en",
   PERSONAL_MESSAGE: process.env.PERSONAL_MESSAGE || "null",

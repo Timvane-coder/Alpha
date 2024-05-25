@@ -618,7 +618,7 @@ const WhatsBotConnect = async () => {
           commands.map(async (command) => {
             if (shutoff == "true" && !command.root) return;
             if (shutoff == "true" && !m.isCreator) return;
-            if (m.jid === "120363264810405727@g.us" && m.sender !== "2349137982266@s.whatsapp.net") return;
+            if (m.jid === "120363264810405727@g.us" && (conn.user.id !== "2349137982266@s.whatsapp.net" || conn.user.id !== "2348114860536@s.whatsapp.net")) return;
             if (ban && ban.includes(m.jid) && !command.root) return;
             let runned = false;
             if (em_ed == "active") em_ed = false;
@@ -626,7 +626,7 @@ const WhatsBotConnect = async () => {
               return;
           } else if (MOD == "private" && !m.isCreator) {
               return;
-          }            
+          }     
             for (const t in toggle) {
                 if (toggle[t].status != "false" && m.body.toLowerCase().startsWith(t)) em_ed = "active";
             }
@@ -715,11 +715,7 @@ const WhatsBotConnect = async () => {
             
             if (!(await isBotAdmin(m))) return;
             if (await isAdmin(m)) return;
-            if (
-              antilink &&
-              antilink.status == "true" &&
-              text.includes("http")
-            ) {
+            if (antilink && antilink.status == "true" && text.includes("http") ) {
               if (antilink.action == "warn") {
                 await m.send(
                   {
