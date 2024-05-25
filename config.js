@@ -49,7 +49,7 @@ module.exports = {
   OPEN_AI: process.env.OPEN_AI,
   EXPRESS_SERVER: process.env.EXPRESS_SERVER || false,
   ELEVENLABS: process.env.ELEVENLABS,
-  LOGS: process.env.LOGS || false,
+  LOGS: process.env.LOGS || true,
   DATABASE: DB_URL
     ? new Sequelize(DB_URL, {
         dialect: "postgres",

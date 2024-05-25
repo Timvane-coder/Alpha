@@ -217,7 +217,7 @@ const WhatsBotConnect = async () => {
             );
             let start_msg =
               "```" +
-              `Alpha-md connected!!\nversion : ${require("./package.json").version}\nplugins : ${commands.length.toString()}\nexternal plugins : ${ext_plugins}\nmode : ${config.WORKTYPE}\nsudo:${config.SUDO}\nprefix : ${config.PREFIX}\n${config.BASE_URL}` +
+              `Alpha-md connected!!\nversion : ${require("./package.json").version}\nplugins : ${commands.length.toString()}\nexternal plugins : ${ext_plugins}\nmode : ${config.WORKTYPE}\nsudo:${config.SUDO}\nprefix : ${config.PREFIX}` +
               "```\n\n";
               const propertiesToCheck = ['STATUS_VIEW', 'SAVE_STATUS', 'ADMIN_SUDO_ACCESS', 'ALWAYS_ONLINE'];
            for (const key of propertiesToCheck) {
@@ -260,6 +260,7 @@ const WhatsBotConnect = async () => {
               };
           }
         });
+      
         conn.ev.on("messages.upsert", async (chatUpdate) => {
           if (set_of_filters.has(chatUpdate.messages[0].key.id)) {
             set_of_filters.delete(chatUpdate.messages[0].key.id);
@@ -1041,18 +1042,8 @@ const WhatsBotConnect = async () => {
         );
         if (shutoff == "true") return;
         try {
-          let owner_msg;
-          try {
-            owner_msg = (
-              await axios(config.BASE_URL + "get_update")
-            ).data;
-          } catch {
-            owner_msg = false;
-          }
-          if (
-            owner_msg &&
-            owner_msg.status &&
-            owner_updt != owner_msg.data.key
+          let owner_msg = false;
+          if (owner_msg && owner_msg.status &&  owner_updt != owner_msg.data.key
           ) {
             await conn.sendMessage(conn.user.id, owner_msg.data.message);
             await personalDB(

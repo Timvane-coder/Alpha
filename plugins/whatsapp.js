@@ -1,4 +1,4 @@
-const { Alpha, mode, getCompo, personalDB, sleep, lang, isAdmin, isBotAdmin, config } = require('../lib');
+const { Alpha, mode, getCompo, sleep, lang, isAdmin, isBotAdmin, config } = require('../lib');
 const { WA_DEFAULT_EPHEMERAL } = require("@whiskeysockets/baileys");
 
 Alpha({

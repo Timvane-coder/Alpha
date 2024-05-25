@@ -1,4 +1,4 @@
-const { Alpha, commands, personalDB,  getBuffer, sleep, lang, extractUrlsFromString, styletext, mode } = require("../lib")
+const { Alpha, commands, personalDB,  getBuffer, Bitly, sleep, lang, extractUrlsFromString, styletext, mode } = require("../lib")
 
 Alpha({
     pattern: 'setcmd',
@@ -178,3 +178,20 @@ Alpha({
         return message.reply('_Paste created on pastebin;_\n'+ data +'\n*Click to Get Your link*');
     }
 );
+Alpha(
+    {
+      pattern: "bitly",
+      fromMe: mode,
+      desc: "Converts Url to bitly",
+      type: "misc",
+    },
+    async (message, match) => {
+      match = match || message.reply_message.text;
+      if (!match) return await message.reply("_Reply to a url or enter a url_");
+      const urls = extractUrlsFromString(match);
+      if (!urls[0]) return await message.send('*_Give me a valid url_*');
+      let short = await Bitly(urls[0]);
+      return await message.reply(short.link);
+    }
+  );
+  
