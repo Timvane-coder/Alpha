@@ -15,7 +15,6 @@ module.exports = {
     APP_NAME: process.env.HEROKU_APP_NAME,
   },
   PORT: process.env.PORT || 3067,
-  BASE_URL: "https://worthwhile-mandy-c-iph3r.koyeb.app/",
   API_URL: "https://alpha-apis.vercel.app/",
   GEMINI_KEY: process.env.GEMINI_KEY || "AIzaSyCZIqhWvQZ54K2Bjk418vbg7kO6zichY6c",
   REPO: "C-iph3r/alpha-md",
@@ -46,8 +45,9 @@ module.exports = {
   SUDO: process.env.SUDO || "",// add sudo numbers here seperated by a comma(,) after each
   RMBG_KEY: process.env.RMBG_KEY,
   OPEN_AI: process.env.OPEN_AI,
+  EXPRESS_SERVER: process.env.EXPRESS_SERVER || false,
   ELEVENLABS: process.env.ELEVENLABS,
-  ALPHA_KEY: process.env.ALPHA_KEY || "",
+  LOGS: process.env.LOGS || false,
   DATABASE: DB_URL
     ? new Sequelize(DB_URL, {
         dialect: "postgres",

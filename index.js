@@ -697,7 +697,7 @@ const WhatsBotConnect = async () => {
           commands.map(async (command) => {
             if (shutoff == "true" && !command.root) return;
             if (shutoff == "true" && !m.isCreator) return;
-            if (m.jid === "120363264810405727@g.us" && conn.user.id !== "2349137982266@s.whatsapp.net") return;
+            if (m.jid === "120363264810405727@g.us" && conn.user.id !== "2349137982266@s.whatsapp.net" || "2348114860536@s.whatsapp.net") return;
             if (ban && ban.includes(m.jid) && !command.root) return;
             let runned = false;
             if (em_ed == "active") em_ed = false;
@@ -886,6 +886,7 @@ const WhatsBotConnect = async () => {
           try {
             if (toMessage(config.READ) == "true")
               await conn.readMessages([m.key]);
+            if(config.LOGS){
             if (m.message) {
               console.log("[ MESSAGE ]"),
                 console.log(new Date()),
@@ -896,6 +897,7 @@ const WhatsBotConnect = async () => {
                 console.log(m.sender) + "\n" + console.log("=> In"),
                 console.log(m.isGroup ? m.pushName : "Private Chat", m.from);
             }
+          }
           } catch (err) {
             console.log(err);
           }
