@@ -1,4 +1,4 @@
-const { Alpha, mode, sendPhoto, TTS, sendUrl, sendGif, sendBassAudio, sendSlowAudio, sendBlownAudio, sendDeepAudio, sendErrapeAudio, sendFastAudio, sendFatAudio, sendNightcoreAudio, sendReverseAudio, sendSquirrelAudio, toAudio, toPTT, toVideo, AudioMetaData, lang, config } = require('../lib');
+const { Alpha, mode, sendPhoto, TTS, IMGUR, sendGif, sendBassAudio, sendSlowAudio, sendBlownAudio, sendDeepAudio, sendErrapeAudio, sendFastAudio, sendFatAudio, sendNightcoreAudio, sendReverseAudio, sendSquirrelAudio, toAudio, toPTT, toVideo, AudioMetaData, lang, config } = require('../lib');
 const { fromBuffer } = require('file-type');
 
 Alpha({
@@ -198,7 +198,7 @@ Alpha({
     react: "⛰️",
     fromMe: mode,
     type: "converter"
-}, async (message, match) => {
+}, async (message) => {
     if (!message.isMedia) return message.reply(lang.BASE.NEED.format('image/sticker/video/audio'));
-    return await sendUrl(message, message.client);
+    return await IMGUR(message, message.client);
 });

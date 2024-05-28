@@ -1,4 +1,4 @@
-const { Alpha, mention, personalDB, config, } = require("../lib");
+const { Alpha, mention, personalDB, config } = require("../lib");
 
 Alpha(
   {
@@ -54,3 +54,4 @@ Alpha(
     return await mention(message, msg.message);
   },
 );
+

@@ -1,4 +1,4 @@
-const { Alpha, mode, extractUrlsFromString, tiktokdl, fbdown, twdl } = require('../lib');
+const { Alpha, mode, extractUrlsFromString, tiktokdl, fbdown, twdl, igdl } = require('../lib');
 const { download, search } = require('aptoide-scraper');
 
 Alpha({
@@ -62,15 +62,14 @@ Alpha(
             match = match || message.quoted.text;
             if (!match) return await message.reply('*_give me a url_*');
             const urls = extractUrlsFromString(match);
-            if (!urls[0]) return await message.send('*_Give me a valid url_*');
-
+            if (!urls[0]) return await message.reply('*_Give me a valid url_*');
             let { status, video  } = await tiktokdl(urls[0]);
             if (!status) return await message.reply('*Not Found*');
             await message.reply('*Downloading... ⏳*');
             await new Promise(resolve => setTimeout(resolve, 1000));
             await message.sendReply(video, { caption: "*Success✅*" }, 'video');
         } catch (e) {
-            return message.send(e);
+            return message.reply(e);
         }
     }
 );
@@ -88,14 +87,14 @@ Alpha(
             match = match || message.quoted.text;
             if (!match) return await message.reply('*_give me a url_*');
             const urls = extractUrlsFromString(match);
-            if (!urls[0]) return await message.send('*_Give me a valid url_*');
+            if (!urls[0]) return await message.reply('*_Give me a valid url_*');
             let { status, HD  } = await fbdown(urls[0]);
             if (!status) return await message.reply('*Not Found*');
             await message.reply('*Downloading... ⏳*');
             await new Promise(resolve => setTimeout(resolve, 1000));
             await message.sendReply(HD, { caption: "*Success✅*" }, 'video');
         } catch (e) {
-            return message.send(e);
+            return message.reply(e);
         }
     }
 );
@@ -120,7 +119,32 @@ Alpha(
             await new Promise(resolve => setTimeout(resolve, 1000));
             await message.sendReply(video, { caption: "*Success✅*" }, 'video');
         } catch (e) {
-            return message.send(e);
+            return message.reply(e);
+        }
+    }
+);
+
+Alpha(
+    {
+        pattern: 'insta ? (.*)',
+        fromMe: mode,
+        desc: 'download video from instagram url',
+        react: '⬇️',
+        type: 'downloader'
+    },
+    async (message, match) => {
+        try {
+            match = match || message.quoted.text;
+            if (!match) return await message.reply('*_give me a url_*');
+            const urls = extractUrlsFromString(match);
+            if (!urls[0]) return await message.reply('*_Give me a valid url_*');
+            const result = await igdl(urls[0]);
+            if (!result.status) return await message.reply('*Not Found*');
+            await message.reply('*Downloading... ⏳*');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await message.sendReply(result.data, { caption: "*Success✅*" }, 'video');
+        } catch (e) {
+            return message.reply(e);
         }
     }
 );

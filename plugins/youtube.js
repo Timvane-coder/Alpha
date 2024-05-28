@@ -64,6 +64,7 @@ Alpha(
     }
   },
 );
+
 Alpha(
   {
     pattern: "video",

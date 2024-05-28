@@ -1,4 +1,4 @@
-const {	Alpha, isAdmin, isBotAdmin, lang, config, groupDB, poll, PREFIX, sleep } = require('../lib');
+const {	Alpha, isAdmin, isBotAdmin, lang, config, groupDB, PREFIX, sleep } = require('../lib');
 const actions = ["kick", "warn", "null"];
 
 Alpha({
@@ -57,12 +57,13 @@ Alpha({
     if (!BotAdmin) return await message.reply(lang.GROUP.BOT_ADMIN);
     if (!config.ADMIN_SUDO_ACCESS && !message.isCreator) return;
     if (!admin && !message.isCreator) return;
-
+    const groupMetadata = await message.client.groupMetadata(message.jid).catch(e => {});
+    const participants = await groupMetadata.participants;
+    // Check if the bot user is among participants
+    const botUserId = conn.user.id;
+    const isBotUserAdmin = participants.some(participant => participant.id === botUserId && participant.admin);
     if (match.toLowerCase() == 'all') {
-        const groupMetadata = await message.client.groupMetadata(message.jid).catch(e => {});
-        const participants = await groupMetadata.participants;
-        const admins = participants.filter((U) => U.admin).map(({ id }) => id);
-        
+        const admins = participants.filter((U) => U.admin && U.id !== botUserId).map(({ id }) => id);
         let success = true;
         for (let participant of admins) {
             await sleep(250); // to prevent rate limiting
@@ -72,18 +73,22 @@ Alpha({
                 success = false;
             }
         }
-
         if (success) {
-            return await message.reply('All admins have been demoted!');
+            return await message.reply('All admins (except the bot user) have been demoted!');
         } else {
             return await message.reply('Failed to demote some admins.');
         }
     } else {
         if (!message.reply_message.sender) return message.reply(lang.BASE.NEED.format("user"));
+        const targetUserId = message.reply_message.sender;
+        // Skip demotion if the target user is the bot user
+        if (targetUserId === botUserId) {
+            return await message.reply('Cannot demote the bot user.');
+        }
         try {
-            await message.client.groupParticipantsUpdate(message.jid, [message.reply_message.sender], "demote");
-            return message.send(lang.GROUP.DEMOTE.INFO.format(`@${message.reply_message.sender.split('@')[0]}`), {
-                mentions: [message.reply_message.sender]
+            await message.client.groupParticipantsUpdate(message.jid, [targetUserId], "demote");
+            return message.send(lang.GROUP.DEMOTE.INFO.format(`@${targetUserId.split('@')[0]}`), {
+                mentions: [targetUserId]
             });
         } catch (e) {
             return message.reply('Failed to demote the participant.');
@@ -315,6 +320,7 @@ Alpha({
 	await message.client.groupSettingUpdate(message.jid, "unlocked");
 	return await message.send(lang.GROUP.UNLOCK.SUCCESS)
 });
+
 Alpha({
 	pattern: 'leave ?(.*)',
 	type: 'group',
@@ -645,51 +651,41 @@ Alpha(
 
   Alpha(
 	{
-	  pattern: "vote ?(.*)",
+	  pattern: "vote|poll ?(.*)",
 	  desc: "create a poll message",
 	  fromMe: true,
 	  type: "group",
 	  onlyGroup: true,
 	},
 	async (message, match) => {
-	  if ( message.reply_message.i && message.reply_message.type == "pollCreationMessage"
-	  ) {
-		const { status, res, total } = await poll(message.reply_message.data);
-		if (!status) return await message.send("*Not Found*");
-		let msg = "*result*\n\n";
-		const obj = Object.keys(res);
-		msg += `*total options: ${obj.length}*\n`;
-		msg += `*total participates: ${total}*\n\n`;
-		obj.map(
-		  (a) =>
-			(msg += `*${a} :-*\n*_total votes: ${res[a].count}_*\n*_percentage: ${res[a].percentage}_*\n\n`),
-		);
-		return await message.send(msg);
-	  }
 	  match = message.body
-		.replace(/poll/gi, "")
 		.replace(/vote/gi, "")
+		.replace(/poll/gi, "")
 		.replace(PREFIX, "")
 		.trim();
-	  if (!match || !match.split(/[,|;]/))
-		return await message.reply(`_*Example:* ${PREFIX}vote title |option1|option2|option3..._\n_*get a poll result:* ${PREFIX}vote_\n_reply to a poll message to get its result_`,);
-	  const options = match.split(/[,|;]/).slice(1);
+  
+	  if (!match || !match.includes(';') || !match.split(';')[1].includes(','))
+		return await message.reply(`_*Example:* ${PREFIX}vote title; option1,option2,option3..._`);
+  
+	  const [title, optionsString] = match.split(';');
+	  const options = optionsString.split(',').map(option => option.trim());
 	  const { participants } = await message.client.groupMetadata(message.jid);
+  
 	  return await message.send(
 		{
-		  name: match.split(/[,|;]/)[0],
-		  values: options,
+		  name: title.trim(),
+		  values: options.map((option, index) => ({ name: option, id: `option_${index}` })),
 		  withPrefix: false,
 		  onlyOnce: true,
 		  participates: participants.map((a) => a.id),
 		  selectableCount: true,
 		},
 		{},
-		"poll",
+		"poll"
 	  );
-	},
+	}
   );
-
+  
 Alpha(
   {
     pattern: "welcome ?(.*)",

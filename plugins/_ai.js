@@ -1,4 +1,4 @@
-const { Alpha, mode, badWordDetect, elevenlabs, config, GPT } = require('../lib/');
+const { Alpha, mode, badWordDetect, elevenlabs, config, GPT, photoleap } = require('../lib/');
 
 Alpha({
     pattern: 'dalle',
@@ -9,7 +9,7 @@ Alpha({
 }, async (message, match) => {
     match = match || message.reply_message.text;
     if (!match) return await message.reply('*_give me a text to generate ai image!_*');
-    if (badWordDetect(match.toLowerCase())) return await message.send("_*Your request cannot be fulfilled due to the presence of obscene content in your message*_")
+    if (badWordDetect(match.toLowerCase())) return await message.reply("_*Your request cannot be fulfilled due to the presence of obscene content in your message*_")
     return await message.sendReply(`https://api.gurusensei.workers.dev/dream?prompt=${encodeURIComponent(match)}`, {
             caption: "*result for* ```" + match + "```"
     }, "image");
@@ -43,7 +43,7 @@ Alpha(
     },
     async (message, match) => {
       if (match == "list")
-        return await message.send(`╭「 *List of Aitts* 」
+        return await message.reply(`╭「 *List of Aitts* 」
    ├ 1 _rachel_ 
    ├ 2 _clyde_ 
    ├ 3 _domi_ 
@@ -86,12 +86,12 @@ Alpha(
    └`);
       const [v, k] = match.split(/,;|/);
       if (!k)
-        return await message.send(
+        return await message.reply(
           `*_need voice id and text_*\n_example_\n\n_*aitts* hey vroh its a test,adam_\n_*aitts list*_`,
         );
       const stream = await elevenlabs(match);
       if (!stream)
-        return await message.send(
+        return await message.reply(
           `_*please upgrade your api key*_\n_get key from http://docs.elevenlabs.io/api-reference/quick-start/introduction_\n_example_\n\nsetvar elvenlabs: your key\n_or update your config.js manually_`,
         );
       return await message.send(
@@ -106,3 +106,22 @@ Alpha(
     },
   );
   
+  Alpha({
+    pattern: 'pleap',
+    desc: "generate photoleap's ai images",
+    react: "🤩",
+    type: "ai",
+    fromMe: mode
+}, async (message, match) => {
+    match = match || message.reply_message.text;
+    if (!match) return await message.reply('*_give me a text to generate ai image!_*');
+    if (badWordDetect(match.toLowerCase())) return await message.reply("_*Your request cannot be fulfilled due to the presence of obscene content in your message*_")
+   const res = await photoleap(match)
+  if (res.status === true){
+      return await message.sendReply(res.url, {
+            caption: "*result for* ```" + match + "```"
+    }, "image");
+  } else{
+    message.reply("_an error occured_")
+  }
+});
