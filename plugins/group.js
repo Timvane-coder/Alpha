@@ -828,7 +828,7 @@ Alpha({
   const [jidsPart, action] = match.split(';');
   const jids = jidsPart.split(',').map(jid => jid.trim());
   if (!match) {
-    return await message.reply(`use ${PREFIX}help for more info`);
+    return await message.reply(`use ${PREFIX}common help for more info`);
 }
   if (jids.length < 2) {
       return await message.reply(`Please provide at least two group JIDs. use ${PREFIX}help for more info`);

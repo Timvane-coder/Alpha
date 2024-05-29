@@ -194,38 +194,3 @@ Alpha(
       return await message.reply(short.link);
     }
   );
-  
-  Alpha(
-    {
-        pattern: 'vv ?(.*)',
-        fromMe: true,
-        desc: 'Forward view-once message',
-        type: 'misc',
-    }, async (message) => {
-    //    if (!message.quoted || !message.quoted.viewOnceMessageV2) return await message.send("Please reply to a view-once message.");
-        
-        const quotedMessage = message.quoted;
-        let mediaType = 'image'; // Assuming it's an image, adjust if needed
-        
-        // Check the type of quoted message and download media if applicable
-        if (quotedMessage.message?.imageMessage) {
-            mediaType = 'image';
-            await message.client.downloadMediaMessage(quotedMessage);
-        } else if (quotedMessage.message?.videoMessage) {
-            mediaType = 'video';
-            await message.client.downloadMediaMessage(quotedMessage);
-        } else if (quotedMessage.message?.audioMessage) {
-            mediaType = 'audio';
-            await message.client.downloadMediaMessage(quotedMessage);
-        }
-        
-        // Prepare options for forwarding the message
-        const options = {
-            viewOnce: false,
-            mimetype: mediaType === 'image' ? 'image/jpeg' : (mediaType === 'video' ? 'video/mp4' : 'audio/ogg'),
-            quoted: quotedMessage,
-        };
-
-        return await message.forwardMessage(message.from, quotedMessage.message, options);
-    }
-);

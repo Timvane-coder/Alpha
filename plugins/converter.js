@@ -193,7 +193,7 @@ Alpha({
 });
 
 Alpha({
-    pattern: 'url',
+    pattern: 'imgur',
     desc: lang.GENERAL.URL_DESC,
     react: "⛰️",
     fromMe: mode,
