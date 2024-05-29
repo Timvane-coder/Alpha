@@ -148,7 +148,6 @@ Alpha({
         return await message.reply(msg);
     }
 });
-
 Alpha(
     {
       pattern: "setsudo ?(.*)",
@@ -161,9 +160,12 @@ Alpha(
       if (!newSudo) {
         return await message.reply("*Please reply to a user to set as sudo*");
       }
-        try {
-        let setSudo = (SUDO + "," + newSudo).replace(/,,/g, ",");
-        setSudo = setSudo.startsWith(",") ? setSudo.replace(",", "") : setSudo;
+      try {
+        const sudoList = SUDO.split(',');
+        if (sudoList.includes(newSudo)) {
+          return await message.reply("This number is already in the sudo list.");
+        }
+        const setSudo = SUDO ? `${SUDO},${newSudo}` : newSudo;
   
         if (VPS) {
           updateEnvFile("SUDO", setSudo);
@@ -179,15 +181,53 @@ Alpha(
         } else {
           await heroku.patch(baseURI + "/config-vars", { body: { SUDO: setSudo } });
         }
-        await sendUpdatedSudoList(message);
+        await message.reply("Sudo number added successfully: " + setSudo);
       } catch (error) {
         await message.reply('Error setting sudo: ' + error.message);
       }
     }
   );
 
+Alpha(
+    {
+      pattern: "remsudo ?(.*)",
+      fromMe: true,
+      desc: "Remove a number from the list of sudo numbers",
+      type: "config"
+    },
+    async (message) => {
+      const removeSudo = message.reply_message ? message.reply_message.sender.split('@')[0] : '';
+      if (!removeSudo) {
+        return await message.reply("*Please reply to a user to remove from sudo*");
+      }
+      try {
+        const sudoList = SUDO.split(',');
+        if (!sudoList.includes(removeSudo)) {
+          return await message.reply("The specified user is not in the sudo list.");
+        }
+        const newSudoList = sudoList.filter(number => number !== removeSudo).join(',');
+    
+        if (VPS) {
+          updateEnvFile("SUDO", newSudoList);
+        } else if (KOYEB) {
+          const response = await axios.patch(
+            `https://app.koyeb.com/v1/apps/${KOYEB_APP_NAME}/env`,
+            { SUDO: newSudoList },
+            { headers: { 'Authorization': `Bearer ${KOYEB_API_KEY}` } }
+          );
+          if (response.status !== 200) {
+            throw new Error('Error setting Koyeb variable');
+          }
+        } else {
+          await heroku.patch(baseURI + "/config-vars", { body: { SUDO: newSudoList } });
+        }
+        await message.reply("Sudo number removed successfully. Current sudo numbers: " + newSudoList);
+      } catch (error) {
+        await message.reply('Error removing user from sudo: ' + error.message);
+      }
+    }
+  );
 
-  
 Alpha(
     {
       pattern: "getsudo ?(.*)",
@@ -234,63 +274,3 @@ Alpha(
       await message.reply("```" + `Sudo numbers are : ${sudoNumbers}` + "```");
     }
   );
-
-
-function updateEnvFile(key, value) {
-    let envConfig = fs.readFileSync('.env', 'utf-8').split('\n');
-    let found = false;
-    envConfig = envConfig.map(line => {
-        if (line.startsWith(key.toUpperCase())) {
-            found = true;
-            const existingValue = line.split('=')[1];
-            const updatedValue = existingValue ? `${existingValue},${value}` : value;
-            return `${key.toUpperCase()}=${updatedValue}`;
-        }
-        return line;
-    });
-    if (!found) envConfig.push(`${key.toUpperCase()}=${value}`);
-    fs.writeFileSync('.env', envConfig.join('\n'));
-}
-
-function deleteFromEnvFile(key, value) {
-    let envConfig = fs.readFileSync('.env', 'utf-8').split('\n');
-    envConfig = envConfig.map(line => {
-        if (line.startsWith(key.toUpperCase())) {
-            if (value) {
-                const existingValues = line.split('=')[1].split(',');
-                const updatedValues = existingValues.filter(v => v !== value);
-                return `${key.toUpperCase()}=${updatedValues.join(',')}`;
-            }
-            return '';
-        }
-        return line;
-    }).filter(Boolean);
-    fs.writeFileSync('.env', envConfig.join('\n'));
-}
-
-async function sendUpdatedSudoList(message) {
-    try {
-        let sudoNumbers;
-        if (VPS) {
-            const envConfig = fs.readFileSync('.env', 'utf-8').split('\n');
-            for (const line of envConfig) {
-                if (line.startsWith("SUDO=")) {
-                    sudoNumbers = line.split('=')[1];
-                    break;
-                }
-            }
-        } else if (KOYEB) {
-            const response = await axios.get(
-                `https://app.koyeb.com/v1/apps/${KOYEB_APP_NAME}/env`,
-                { headers: { 'Authorization': `Bearer ${KOYEB_API_KEY}` } }
-            );
-            sudoNumbers = response.data.SUDO;
-        } else {
-            const vars = await heroku.get(baseURI + "/config-vars");
-            sudoNumbers = vars.SUDO;
-        }
-        await message.reply("```Updated sudo numbers are: " + sudoNumbers + "```");
-    } catch (error) {
-        await message.reply('Error retrieving sudo list: ' + error.message);
-    }
-} 
