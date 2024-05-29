@@ -1,7 +1,6 @@
 const {
     Alpha,
     mode,
-    weather,
     ringtone,
     GenListMessage,
     lang,
@@ -10,20 +9,7 @@ const {
 } = require('../lib');
 
 
-Alpha({
-    pattern: 'google',
-    fromMe: mode,
-    desc: lang.SCRAP.GOOGLE_DESC,
-    react: "🙃",
-    type: "search"
-}, async (message, match) => {
-    if (!match) return message.send(lang.BASE.TEXT);
-    const { result, status } = await getJson(`${config.BASE_URL}api/search/google?text=${match}&apikey=${config.ALPHA_KEY}`);
-    if (!status) return await message.send(`API key limit exceeded. Get a new API key at ${config.BASE_URL}signup. Set var alpha_key: your_api_key`);
-    await Promise.all(result.map(async (item) => {
-        await message.send(`*Title:* ${item.title}\n*Link:* ${item.link}\n*Snippet:* ${item.snippet}\n`);
-    }));
-});
+
 
 Alpha({
     pattern: 'rindl',

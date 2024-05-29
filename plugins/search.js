@@ -1,4 +1,5 @@
-const { Alpha, lang, mode, badWordDetect, weather,truecaller, TRT, getLyrics } = require('../lib');
+const { Alpha, lang, mode, badWordDetect, weather,truecaller, TRT } = require('../lib');
+const gis = require('g-i-s');
 
 
 Alpha({
@@ -83,4 +84,55 @@ Alpha({
 	}
 	msg += `╰─❏`;
 	return await message.send('```' + msg + '```', {quoted: message.data})
+});
+
+
+
+Alpha({
+    pattern: 'google',
+    fromMe: mode,
+    desc: lang.SCRAP.GOOGLE_DESC,
+    react: "🙃",
+    type: "search"
+}, async (message, match) => {
+	const text = match || message.reply_message.text;
+   if (!text) return message.send(lang.BASE.TEXT);
+      let google = require('google-it');
+        google({ 'query': text}).then(res => {
+            let msg= `_*Google Top Search Resuts For Query : ${text}*_\n\n`;
+            for (let g of res) {
+                msg+= `*➣ Title :* ${g.title}\n`;
+                msg+= `*➣ Description :* ${g.snippet}\n`;
+                msg+= `*➣ Link :* ${g.link}\n\n────────────────────────\n\n`;
+            }
+         
+            return message.reply(msg);
+        })
+    }
+);
+
+Alpha({
+    pattern: 'gis',
+    desc: 'generate image with ai',
+    react: "🤩",
+    type: "search",
+    fromMe: mode
+}, async (message, match) => {
+    match = match || message.reply_message.text;
+    if (!match) return await message.reply('*_give me a text to generate ai image!_*');
+    if (badWordDetect(match.toLowerCase())) return await message.reply("_*Your request cannot be fulfilled due to the presence of obscene content in your message*_");
+    gis(match, async (error, images) => {
+        if (error) {
+            console.error(error);
+            return await message.reply("An error occurred while searching for images.");
+        }
+        if (images && images.length > 0) {
+            const imageUrl = images[0].url;
+            return await message.sendReply(imageUrl, {
+                caption: "*result for* ```" + match + "```"
+            }, "image");
+        } else {
+            return await message.reply("No images found for the given search query.");
+        }
+    });
 });
