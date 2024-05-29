@@ -1,4 +1,5 @@
-const { Alpha, mode, badWordDetect, elevenlabs, config, GPT, photoleap } = require('../lib/');
+const { Alpha, mode, badWordDetect, elevenlabs, config, GPT, PREFIX, photoleap } = require('../lib/');
+const { recognize } = require('node-native-ocr');
 
 Alpha({
     pattern: 'dalle',
@@ -123,5 +124,34 @@ Alpha(
     }, "image");
   } else{
     message.reply("_an error occured_")
+  }
+});
+
+
+
+Alpha({
+  pattern: "ocr",
+  desc: "Perform optical character recognition (OCR) on an image",
+  type: "ai",
+  usage: `_*Simply send an image with the command ${PREFIX}ocr or reply to an image with the command ${PREFIX}ocr to recognize text in the image.*_\n`,
+  fromMe: mode
+}, async (message, match) => {
+  if (!/image/.test(message.mime)) return await message.reply(`*Please send or reply to an image or use ${PREFIX}ocr help*_`);
+  try {
+      let download; 
+      if (message.reply_message.mime) {
+          download = await message.reply_message.download();
+      } else {
+          download = await message.client.downloadMediaMessage(message);
+      }
+      let text = "";
+      text = await recognize(download, { lang: 'eng' });
+      if (text) {
+          await message.reply("_*Here is the text recognized from the image:*_\n\n" + text);
+      } else {
+          await message.reply("_*No text was found in the provided image.*_");
+      }
+  } catch (error) {
+      await message.reply("An error occurred while performing OCR.", error);
   }
 });
