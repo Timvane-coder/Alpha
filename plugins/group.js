@@ -1,4 +1,4 @@
-const {	Alpha, isAdmin, isBotAdmin, lang, config, groupDB, PREFIX, sleep } = require('../lib');
+const {	Alpha, isAdmin, isBotAdmin, lang, config, common, groupDB, PREFIX, sleep } = require('../lib');
 const actions = ["kick", "warn", "null"];
 
 Alpha({
@@ -796,3 +796,49 @@ Alpha(
     return await message.send("_*goodbye get*_\n_*goodbye* thank you for joining &mention_\n*_goodbye false_*", );
   },
 );
+
+
+const help = `
+To find common participants in multiple groups and perform actions, use the following format:
+
+${PREFIX}common <group1_jid>, <group2_jid>, ... ;<action>
+
+Replace <group1_jid>, <group2_jid>, ... with the JIDs of the groups you want to compare, separated by commas. Then, add a semicolon (;) followed by the action you want to perform.
+
+Available actions:
+- list: Lists common participants excluding admins.
+- listall: Lists all common participants including admins.
+- kick: Kicks common participants excluding admins.
+- kickall: Kicks all common participants excluding the bot itself.
+
+Example usage:
+${PREFIX}common 120363266704865818@g.us, 120363303061636757@g.us;list
+${PREFIX}common 120363266704865818@g.us, 120363303061636757@g.us;listall
+${PREFIX}common 120363266704865818@g.us, 120363303061636757@g.us;kick
+${PREFIX}common 120363266704865818@g.us, 120363303061636757@g.us;kickall
+`;
+Alpha({
+  pattern: 'common ?(.*)',
+  fromMe: true,
+  desc: 'Find common participants in groups and perform actions on them',
+  type: 'group',
+  usage: help,
+  onlyGroup: true
+}, async (message, match) => {
+  const [jidsPart, action] = match.split(';');
+  const jids = jidsPart.split(',').map(jid => jid.trim());
+  if (!match) {
+    return await message.reply(`use ${PREFIX}help for more info`);
+}
+  if (jids.length < 2) {
+      return await message.reply(`Please provide at least two group JIDs. use ${PREFIX}help for more info`);
+  }
+  const admin = await isAdmin(message);
+  const BotAdmin = await isBotAdmin(message);
+
+  if (!BotAdmin) return await message.reply(lang.GROUP.BOT_ADMIN);
+  if (!config.ADMIN_SUDO_ACCESS && !message.isCreator) return;
+  if (!admin && !message.isCreator) return;
+
+  return await common(message, jids, action.trim());
+});

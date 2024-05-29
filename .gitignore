@@ -1,6 +1,5 @@
-node_modules
-auth_info_baileys
-.env
-database.db
-.gitpod.yml
-package-lock.json
+/node_modules
+/gitpod.yml
+/database.db
+/.env
+/auth_info_baileys

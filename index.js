@@ -640,7 +640,7 @@ const WhatsBotConnect = async () => {
                     m.text = m.body.slice(EventCmd.length).trim();
                     if (toMessage(config.READ) == "cmd") await conn.readMessages([m.key]);
                     if (!em_ed) {
-                        if (["help", "use", "usage", "work"].includes(m.text)) {
+                        if (["help", "use", "usage"].includes(m.text)) {
                             if (!["undefined", "null", "false", undefined].includes(command.usage)) return await m.send(command.usage);
                             return await m.send("sorry dear! command usage not found!!");
                         }
@@ -749,7 +749,7 @@ const WhatsBotConnect = async () => {
                   "add",
                 );
                 const remains = config.WARNCOUNT - count;
-                let warnmsg = `⚠️ WARNING ⚠️\nUser: @${m.number}\n------------------\nℹ️ INFO ℹ️\nReason: *Antilink*\nCount: ${count}\nRemaining: ${remains}`;
+                let warnmsg = `*⚠️ WARNING ⚠️*\n*User:* @${m.number}\n*------------------*\n*ℹ️ INFO ℹ️*\n*Reason:* Antilink\n*Count:* ${count}\n*Remaining:* ${remains}`;
                 await m.send(warnmsg, {
                   mentions: [m.sender],
                 });
@@ -824,7 +824,7 @@ const WhatsBotConnect = async () => {
                   "add",
                 );
                 const remains = config.WARNCOUNT - count;
-                let warnmsg = `⚠️ WARNING ⚠️\nUser: @${m.number}\n------------------\nℹ️ INFO ℹ️\nReason: *Antibot*\nCount: ${count}\nRemaining: ${remains}`;
+                let warnmsg = `*⚠️ WARNING ⚠️*\n*User:* @${m.number}\n*------------------*\n*ℹ️ INFO ℹ️*\n*Reason:* Antibot\n*Count:* ${count}\n*Remaining:* ${remains}`;
                 await m.send(warnmsg, {
                   mentions: [m.sender],
                 });
@@ -904,7 +904,7 @@ const WhatsBotConnect = async () => {
                       "add",
                     );
                     const remains = config.WARNCOUNT - count;
-                    let warnmsg = `⚠️ WARNING ⚠️\nUser: @${m.number}\n------------------\nℹ️ INFO ℹ️\nReason: *Antiword*\nCount: ${count}\nRemaining: ${remains}`;
+                    let warnmsg = `*⚠️ WARNING ⚠️*\n*User:* @${m.number}\n*------------------*\n*ℹ️ INFO ℹ️*\n*Reason:* Antiword\n*Count:* ${count}\n*Remaining:* ${remains}`;
                     await m.send(warnmsg, {
                       mentions: [m.sender],
                     });
@@ -952,43 +952,47 @@ const WhatsBotConnect = async () => {
               });
             }
           }
-          if (config.ANTI_DELETE === "null") {
-            return;
-        } else if (config.ANTI_DELETE && m.type === "protocolMessage") {
-            const protocolMessage = chatUpdate.messages[0].message.protocolMessage;
-            if (!protocolMessage || !protocolMessage.key) {
-                return;
-            }
-            const key = protocolMessage.key;
-            const chat = conn.chats[m.jid][key.id];
-            if (!chat) {
-                return;
-            }
-            if (m.isCreator) {
+         // antidelete
+         if (config.ANTI_DELETE === "null") {
+          return;
+      }
+      if (config.ANTI_DELETE && m.type === "protocolMessage") {
+          const protocolMessage = chatUpdate.messages[0]?.message.protocolMessage;
+          if (!protocolMessage || !protocolMessage.key) {
               return;
-            }
-            let forwardTo;
-            if (config.ANTI_DELETE === "pm") {
-                forwardTo = conn.user.id;
-            } else if (config.ANTI_DELETE === "gc") {
-                forwardTo = m.jid;
-            } else {
-                forwardTo = config.ANTI_DELETE;
-            }
-            await m.forwardMessage(forwardTo, chat, {
-                linkPreview: {
-                    title: "deleted message",
-                },
-                quoted: {
-                    key,
-                    message: chat,
-                },
-            });
-        } else if (config.ANTI_DELETE && m.type !== "protocolMessage") {
-            if (!conn.chats) conn.chats = {};
-            if (!conn.chats[m.jid]) conn.chats[m.jid] = {};
-            conn.chats[m.jid][m.key.id] = m.message;
-        }              
+          }
+          const key = protocolMessage.key;
+          const chat = conn.chats[m.jid]?.[key.id];
+          if (!chat || m.isCreator) {
+              return;
+          }
+          let forwardTo = config.ANTI_DELETE === "pm" ? conn.user.id : (config.ANTI_DELETE === "gc" ? m.jid : config.ANTI_DELETE);
+          try {
+              await m.forwardMessage(forwardTo, chat, {
+                  linkPreview: {
+                      title: "deleted message",
+                  },
+                  quoted: {
+                      key,
+                      message: chat,
+                  },
+              });
+          } catch (error) {
+              await m.forwardMessage(m.jid, chat, {
+                  linkPreview: {
+                      title: "deleted message",
+                  },
+                  quoted: {
+                      key,
+                      message: chat,
+                  },
+              });
+          }
+      } else if (config.ANTI_DELETE && m.type !== "protocolMessage") {
+          conn.chats ??= {};
+          conn.chats[m.jid] ??= {};
+          conn.chats[m.jid][m.key.id] = m.message;
+      }                  
           if (!em_ed && shutoff != "true") {
             if (m && toMessage(config.REACT) == "emoji" && !isReact) {
               if (m.body.match(/\p{EPres}|\p{ExtPict}/gu)) {
