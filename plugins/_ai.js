@@ -136,6 +136,7 @@ Alpha({
   usage: `_*Simply send an image with the command ${PREFIX}ocr or reply to an image with the command ${PREFIX}ocr to recognize text in the image.*_\n`,
   fromMe: mode
 }, async (message, match) => {
+  process.env.TESSDATA_PREFIX = './media/tools/eng.traineddata';
   if (!/image/.test(message.mime)) return await message.reply(`*Please send or reply to an image or use ${PREFIX}ocr help*_`);
   try {
       let download; 
