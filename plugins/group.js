@@ -650,41 +650,39 @@ Alpha(
   );
 
   Alpha(
-	{
-	  pattern: "vote|poll ?(.*)",
-	  desc: "create a poll message",
-	  fromMe: true,
-	  type: "group",
-	  onlyGroup: true,
-	},
-	async (message, match) => {
-	  match = message.body
-		.replace(/vote/gi, "")
-		.replace(/poll/gi, "")
-		.replace(PREFIX, "")
-		.trim();
-  
-	  if (!match || !match.includes(';') || !match.split(';')[1].includes(','))
-		return await message.reply(`_*Example:* ${PREFIX}vote title; option1,option2,option3..._`);
-  
-	  const [title, optionsString] = match.split(';');
-	  const options = optionsString.split(',').map(option => option.trim());
-	  const { participants } = await message.client.groupMetadata(message.jid);
-  
-	  return await message.send(
-		{
-		  name: title.trim(),
-		  values: options.map((option, index) => ({ name: option, id: `option_${index}` })),
-		  withPrefix: false,
-		  onlyOnce: true,
-		  participates: participants.map((a) => a.id),
-		  selectableCount: true,
-		},
-		{},
-		"poll"
-	  );
-	}
-  );
+    {
+      pattern: "vote ?(.*)",
+      desc: "create a poll message",
+      fromMe: true,
+      type: "group",
+      onlyGroup: true,
+    },
+    async (message, match) => {
+      match = message.body
+      .replace(/vote/gi, "")
+      .replace(PREFIX, "")
+      .trim();
+    
+      if (!match || !match.includes('|'))
+      return await message.reply(`_*Example:* ${PREFIX}vote title|option1|option2|option3..._`);
+    
+      const [title, ...options] = match.split('|').map(part => part.trim());
+      const { participants } = await message.client.groupMetadata(message.jid);
+    
+      return await message.send(
+      {
+        name: title.trim(),
+        values: options.map((option, index) => ({ name: option, id: `option_${index}` })),
+        withPrefix: false,
+        onlyOnce: true,
+        participates: participants.map((a) => a.id),
+        selectableCount: true,
+      },
+      {},
+      "poll"
+      );
+    }
+  );  
   
 Alpha(
   {
@@ -798,25 +796,7 @@ Alpha(
 );
 
 
-const help = `
-To find common participants in multiple groups and perform actions, use the following format:
-
-${PREFIX}common <group1_jid>, <group2_jid>, ... ;<action>
-
-Replace <group1_jid>, <group2_jid>, ... with the JIDs of the groups you want to compare, separated by commas. Then, add a semicolon (;) followed by the action you want to perform.
-
-Available actions:
-- list: Lists common participants excluding admins.
-- listall: Lists all common participants including admins.
-- kick: Kicks common participants excluding admins.
-- kickall: Kicks all common participants excluding the bot itself.
-
-Example usage:
-${PREFIX}common 120363266704865818@g.us, 120363303061636757@g.us;list
-${PREFIX}common 120363266704865818@g.us, 120363303061636757@g.us;listall
-${PREFIX}common 120363266704865818@g.us, 120363303061636757@g.us;kick
-${PREFIX}common 120363266704865818@g.us, 120363303061636757@g.us;kickall
-`;
+const help = `To find common participants in multiple groups and perform actions, use the format: ${PREFIX}common <group1_jid>, <group2_jid>, ... ;<action>. Replace JIDs with groups to compare, separated by commas, then add a semicolon followed by the action. Actions include listing common participants (list/listall) or kicking them (kick/kickall). Example: ${PREFIX}common 120363266704865818@g.us, 120363303061636757@g.us;list.`;
 Alpha({
   pattern: 'common ?(.*)',
   fromMe: true,

@@ -80,18 +80,8 @@ function removeFile(FilePath) {
   return true;
 }
 console.log("starting...");
-let store = makeInMemoryStore({
-  logger: pino().child({
-    level: "silent",
-    stream: "store",
-  }),
-});
-store.poll_message = {
-  message: [],
-};
-store.button_message = {
-  message: [],
-};
+
+
 const WhatsBotConnect = async () => {
  /* if (!config.SESSION_ID) {
 		console.log('please provide a session id in config.js\nscan from Alpha server');
@@ -115,8 +105,7 @@ const WhatsBotConnect = async () => {
     console.log("Syncing Database");
     await config.DATABASE.sync();
     const { state, saveCreds } = await useMultiFileAuthState( __dirname + "/auth_info_baileys",);
-    const { version, isLatest } = await fetchLatestBaileysVersion()
-    console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`)
+    const { version } = await fetchLatestBaileysVersion();
     let conn = await WASocket({
       version,
       logger: pino({ level: "fatal" }),

@@ -8,6 +8,7 @@ const DB_URL = process.env.DATABASE_URL || "";
 module.exports = {
   ANTI_DELETE: process.env.ANTI_DELETE || 'null', // can use g, p, or jid eg '2348114860536@s.whatsapp.net'
   SESSION_ID: process.env.SESSION_ID || "A_L_P_H_A_24_06_07_BZ7X_WB_I7", //your session id you got from scan required to restore your ceds
+  SERVER_URL: process.env.SERVER_URL  || "https://zfvdwp-5000.csb.app/",
   HEROKU: {
     API_KEY: process.env.HEROKU_API_KEY,
     APP_NAME: process.env.HEROKU_APP_NAME,
