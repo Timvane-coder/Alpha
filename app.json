@@ -1,5 +1,5 @@
 {
-  "name": "alpha@1.0.8",
+  "name": "alpha@1.1.0",
   "description": "simple multi featured whatsapp bot",
   "keywords": ["whatsapp"],
   "success_url": "/",
@@ -99,16 +99,6 @@
       "description": "Eleven Labs API key",
       "required": false,
       "value": ""
-    },
-    "ALPHA_KEY": {
-      "description": "Alpha API key (get it from https://api.alpha-md.rf.gd/signup)",
-      "required": true,
-      "value": ""
-    },
-    "OCR_KEY": {
-      "description": "OCR API key",
-      "required": true,
-      "value": "K84003107488957"
     }
   },
   "addons": [

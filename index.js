@@ -81,6 +81,35 @@ function removeFile(FilePath) {
 }
 console.log("starting...");
 
+const store = makeInMemoryStore({
+  logger: pino().child({
+    level: "silent",
+    stream: "store",
+  }),
+});
+store.poll_message = {
+  message: [],
+};
+store.readFromFile = (filePath) => {
+  try {
+    const data = fs.readFileSync(filePath);
+    Object.assign(store, JSON.parse(data));
+  } catch (err) {
+    console.error('Error reading from file:', err);
+  }
+};
+store.writeToFile = (filePath) => {
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(store));
+  } catch (err) {
+    console.error('Error writing to file:', err);
+  }
+};
+store.readFromFile('./lib/store.json');
+setInterval(() => {
+  store.writeToFile('./lib/store.json');
+}, 10_000);
+
 
 const WhatsBotConnect = async () => {
  /* if (!config.SESSION_ID) {
@@ -154,8 +183,7 @@ const WhatsBotConnect = async () => {
           )
         ).data;
         let start_msg = false;
-        let blocked_users = false;
-        
+        let blocked_users = false;        
         const reactArray = require('./lib/emojis.js');
         console.log("installing plugins");
         for (const p in plugins) {
