@@ -16,7 +16,7 @@
         "@ffmpeg-installer/ffmpeg": "^1.1.0",
         "@google/generative-ai": "^0.11.4",
         "@vitalets/google-translate-api": "^9.2.0",
-        "@whiskeysockets/baileys": "^6.7.0",
+        "@whiskeysockets/baileys": "^6.3.0",
         "alpha-md": "latest",
         "aptoide-scraper": "^1.0.1",
         "awesome-phonenumber": "^2.64.0",

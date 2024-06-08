@@ -89,9 +89,11 @@ let store = makeInMemoryStore({
 store.poll_message = {
   message: [],
 };
-
+store.button_message = {
+  message: [],
+};
 const WhatsBotConnect = async () => {
-  if (!config.SESSION_ID) {
+ /* if (!config.SESSION_ID) {
 		console.log('please provide a session id in config.js\nscan from Alpha server');
 		await sleep(5000);
 		process.exit(1);
@@ -104,11 +106,11 @@ const WhatsBotConnect = async () => {
 		});
 		fs.mkdirSync('./auth_info_baileys');
 	}
-    const fetchSession = require('./lib/session')
+   const fetchSession = require('./lib/session')
      const sessionId = config.SESSION_ID; 
      const folderPath = 'auth_info_baileys';
      fetchSession(sessionId, folderPath);;
-     await sleep(5000);
+     await sleep(5000);*/
   try {
     console.log("Syncing Database");
     await config.DATABASE.sync();
