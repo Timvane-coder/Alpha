@@ -7,7 +7,7 @@ const DB_URL = process.env.DATABASE_URL || "";
 
 module.exports = {
   ANTI_DELETE: process.env.ANTI_DELETE || 'null', // can use g, p, or jid eg '2348114860536@s.whatsapp.net'
-  SESSION_ID: process.env.SESSION_ID || "", //your session id you got from scan required to restore your ceds
+  SESSION_ID: process.env.SESSION_ID || "A_L_P_H_A_24_06_07_BZ7X_WB_I7", //your session id you got from scan required to restore your ceds
   HEROKU: {
     API_KEY: process.env.HEROKU_API_KEY,
     APP_NAME: process.env.HEROKU_APP_NAME,
@@ -47,7 +47,6 @@ module.exports = {
   SUDO: process.env.SUDO || "2348114860536",// add sudo numbers here seperated by a comma(,) after each
   RMBG_KEY: process.env.RMBG_KEY,
   OPEN_AI: process.env.OPEN_AI,
-  EXPRESS_SERVER: process.env.EXPRESS_SERVER || false,
   ELEVENLABS: process.env.ELEVENLABS,
   LOGS: process.env.LOGS || true,
   DATABASE: DB_URL

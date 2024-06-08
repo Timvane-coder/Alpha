@@ -29,7 +29,7 @@ if (optionalDependencies[packageName]) {
   const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
   ffmpeg.setFfmpegPath(ffmpegPath);
 }
-const { commands, sleep, serialize, WAConnection, isAdmin, isBotAdmin, badWordDetect, extractUrlsFromString, GenListMessage, config, parsedJid, PgAuthState, groupDB, personalDB } = require("./lib/");
+const { commands, sleep, serialize, WAConnection, isAdmin, isBotAdmin, badWordDetect, extractUrlsFromString, GenListMessage, config, parsedJid, groupDB, personalDB } = require("./lib/");
 let ext_plugins = 0;
 String.prototype.format = function () {
   let i = 0,
@@ -91,7 +91,6 @@ store.poll_message = {
 };
 
 const WhatsBotConnect = async () => {
- /*console.log("generating session!!");
   if (!config.SESSION_ID) {
 		console.log('please provide a session id in config.js\nscan from Alpha server');
 		await sleep(5000);
@@ -109,7 +108,7 @@ const WhatsBotConnect = async () => {
      const sessionId = config.SESSION_ID; 
      const folderPath = 'auth_info_baileys';
      fetchSession(sessionId, folderPath);;
-     await sleep(5000);*/
+     await sleep(5000);
   try {
     console.log("Syncing Database");
     await config.DATABASE.sync();
@@ -1096,11 +1095,10 @@ const WhatsBotConnect = async () => {
     console.log(err);
   }
 }; // function closing
-if(config.EXPRESS_SERVER){
 app.get("/md", (req, res) => {
   res.send("Hello Alpha-md started\nversion: " + require("./package.json").version);
 });
 app.listen(config.PORT, () =>
   console.log(`Alpha-md Server listening on port http://localhost:${config.PORT}`),
-);}
+);
 WhatsBotConnect().catch((e) => console.log(e));
