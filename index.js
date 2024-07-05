@@ -19,6 +19,7 @@ const {
   DisconnectReason,
 } = require("@whiskeysockets/baileys");
 const pino = require("pino");
+const logger = pino({ level: "silent" });
 const axios = require("axios");
 const express = require("express");
 const cron = require("node-cron");
@@ -165,7 +166,7 @@ const ciph3r = async () => {
     const { version } = await fetchLatestBaileysVersion();
     let conn = await WASocket({
       version,
-      logger: pino({ level: "fatal" }),
+      logger: logger,
       printQRInTerminal: true,
       browser: ["Chrome", "Ubuntu", "3.0"],
       auth: state,
