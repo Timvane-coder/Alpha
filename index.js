@@ -1,9 +1,23 @@
 const donPm = new Set();
 const set_of_filters = new Set();
-const fs = require("fs");
+const fs = require("fs").promises;
+const clc = require("cli-color");
 const simpleGit = require("simple-git");
 const git = simpleGit();
-const { default: WASocket, useMultiFileAuthState, makeInMemoryStore, jidNormalizedUser, proto, fetchLatestBaileysVersion, Browsers, getAggregateVotesInPollMessage, getKeyAuthor, decryptPollVote, normalizeMessageContent } = require("@whiskeysockets/baileys");
+const { Boom } = require("@hapi/boom");
+const {
+  default: WASocket,
+  useMultiFileAuthState,
+  jidNormalizedUser,
+  proto,
+  fetchLatestBaileysVersion,
+  Browsers,
+  getAggregateVotesInPollMessage,
+  getKeyAuthor,
+  decryptPollVote,
+  normalizeMessageContent,
+  DisconnectReason,
+} = require("@whiskeysockets/baileys");
 const pino = require("pino");
 const axios = require("axios");
 const express = require("express");
@@ -29,7 +43,27 @@ if (optionalDependencies[packageName]) {
   const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
   ffmpeg.setFfmpegPath(ffmpegPath);
 }
-const { commands, sleep, serialize, WAConnection, isAdmin, isBotAdmin, badWordDetect, extractUrlsFromString, GenListMessage, config, parsedJid, groupDB, personalDB } = require("./lib/");
+const {
+  commands,
+  sleep,
+  serialize,
+  WAConnection,
+  isAdmin,
+  saveMessage,
+  loadMessage,
+  saveChat,
+  savePoll,
+  saveContact,
+  loadPoll,
+  isBotAdmin,
+  badWordDetect,
+  extractUrlsFromString,
+  GenListMessage,
+  config,
+  parsedJid,
+  groupDB,
+  personalDB,
+} = require("./lib/");
 let ext_plugins = 0;
 String.prototype.format = function () {
   let i = 0,
@@ -38,8 +72,16 @@ String.prototype.format = function () {
     return typeof args[i] != "undefined" ? args[i++] : "";
   });
 };
-const MOD = (config.WORKTYPE && config.WORKTYPE.toLowerCase().trim()) == "public" ? "public" : "private";
-const PREFIX_FOR_POLL = !config.PREFIX || config.PREFIX == "false" || config.PREFIX == "null" ? "" : config.PREFIX.includes("[") && config.PREFIX.includes("]") ? config.PREFIX[2] : config.PREFIX.trim();
+const MOD =
+  (config.WORKTYPE && config.WORKTYPE.toLowerCase().trim()) == "public"
+    ? "public"
+    : "private";
+const PREFIX_FOR_POLL =
+  !config.PREFIX || config.PREFIX == "false" || config.PREFIX == "null"
+    ? ""
+    : config.PREFIX.includes("[") && config.PREFIX.includes("]")
+      ? config.PREFIX[2]
+      : config.PREFIX.trim();
 
 function insertSudo() {
   if (config.SUDO == "null" || config.SUDO == "false" || !config.SUDO)
@@ -52,8 +94,7 @@ function toMessage(msg) {
   return !msg || ["null", "false", "off"].includes(msg) ? false : msg;
 }
 
-function removeFile(FilePath) {
-  const tmpFiless = fs.readdirSync("./" + FilePath);
+async function removeFile(FilePath) {
   const ext = [
     ".mp4",
     ".gif",
@@ -66,115 +107,91 @@ function removeFile(FilePath) {
     ".bin",
     ".opus",
   ];
-  tmpFiless.map((tmpFiles) => {
+
+  try {
     if (FilePath) {
-      if (ext.includes(path.extname(tmpFiles).toLowerCase())) {
-        fs.unlinkSync("./" + FilePath + "/" + tmpFiles);
-      }
+      const tmpFiles = await fs.readdir(FilePath);
+      await Promise.all(
+        tmpFiles.map(async (tmpFile) => {
+          if (ext.includes(path.extname(tmpFile).toLowerCase())) {
+            await fs.unlink(path.join(FilePath, tmpFile));
+          }
+        }),
+      );
     } else {
-      if (ext.includes(path.extname(tmpFiles).toLowerCase())) {
-        fs.unlinkSync("./" + tmpFiles);
-      }
+      const curdirfiles = await fs.readdir("./");
+      await Promise.all(
+        curdirfiles.map(async (file) => {
+          if (ext.includes(path.extname(file).toLowerCase())) {
+            await fs.unlink(file);
+          }
+        }),
+      );
     }
-  });
-  return true;
+    return true;
+  } catch (error) {
+    console.error("Error removing files:", error);
+    return false;
+  }
 }
-console.log("starting...");
 
-const store = makeInMemoryStore({
-  logger: pino().child({
-    level: "silent",
-    stream: "store",
-  }),
-});
-store.poll_message = {
-  message: [],
-};
-store.readFromFile = (filePath) => {
-  try {
-    const data = fs.readFileSync(filePath);
-    Object.assign(store, JSON.parse(data));
-  } catch (err) {
-    console.error('Error reading from file:', err);
+console.log(clc.yellow("🤖 Initializing..."));
+
+const ciph3r = async () => {
+  if (!config.SESSION_ID) {
+    console.log(
+      clc.red(
+        "please provide a session id in config.js\nscan from Alpha server",
+      ),
+    );
+    await sleep(5000);
+    process.exit(1);
   }
-};
-store.writeToFile = (filePath) => {
+  const sessionPath = path.join(__dirname, "auth_info_baileys");
   try {
-    fs.writeFileSync(filePath, JSON.stringify(store));
+    await fs.rm(sessionPath, { recursive: true, force: true });
   } catch (err) {
-    console.error('Error writing to file:', err);
+    if (err.code !== "ENOENT") throw err;
   }
-};
-store.readFromFile('./lib/store.json');
-setInterval(() => {
-  store.writeToFile('./lib/store.json');
-}, 10_000);
-
-
-const WhatsBotConnect = async () => {
- /* if (!config.SESSION_ID) {
-		console.log('please provide a session id in config.js\nscan from Alpha server');
-		await sleep(5000);
-		process.exit(1);
-	}
-	if (!fs.existsSync("./auth_info_baileys")) {
-		let dir = await fs.mkdirSync('./auth_info_baileys');
-	} else {
-		const files = await fs.rmSync('./auth_info_baileys', {
-			recursive: true
-		});
-		fs.mkdirSync('./auth_info_baileys');
-	}
-   const fetchSession = require('./lib/session')
-     const sessionId = config.SESSION_ID; 
-     const folderPath = 'auth_info_baileys';
-     fetchSession(sessionId, folderPath);;
-     await sleep(5000);*/
+  await fs.mkdir(sessionPath);
+  const fetchSession = require("./lib/session");
+  await fetchSession(config.SESSION_ID);
   try {
-    console.log("Syncing Database");
+    console.log(clc.yellow("💾 Syncing Database"));
     await config.DATABASE.sync();
-    const { state, saveCreds } = await useMultiFileAuthState( __dirname + "/auth_info_baileys",);
+    const { state, saveCreds } = await useMultiFileAuthState(
+      __dirname + "/auth_info_baileys",
+    );
     const { version } = await fetchLatestBaileysVersion();
     let conn = await WASocket({
       version,
       logger: pino({ level: "fatal" }),
       printQRInTerminal: true,
-      browser: Browsers.windows('Firefox'),
+      browser: ["Chrome", "Ubuntu", "3.0"],
       auth: state,
       generateHighQualityLinkPreview: true,
       getMessage: async (key) => {
-        if (store) {
-          const msg = await store.loadMessage(key.remoteJid, key.id);
-          return msg.message || undefined;
-        }
-        return {
-          conversation: "Hi Im Alpha-md",
-        };
+        return (loadMessage(key.id) || {}).message || { conversation: null };
       },
     });
     conn.ev.on("creds.update", saveCreds);
-    store.bind(conn.ev);
     if (!conn.wcg) conn.wcg = {};
     async function getMessage(key) {
-      if (store) {
-        const msg = await store.loadMessage(key.remoteJid, key.id);
-        return msg?.message;
-      }
-      return {
-        conversation: "Hi im Alpha-md",
-      };
+      const msg = await loadMessage(key.remoteJid, key.id);
+      if (msg) return msg;
+      return { conversation: "Hi im Alpha-md" };
     }
+
     conn = new WAConnection(conn);
     conn.ev.on("connection.update", async ({ connection }) => {
-      if (connection == "connecting")
-        console.log("– Connecting to WhatsApp...");
-      else if (connection == "open") {
+      if (connection == "connecting") {
+        console.log(clc.yellow("ℹ Connecting to WhatsApp... Please Wait."));
+      } else if (connection == "open") {
+        console.log(clc.green("✅ Login Successful!"));
         const { ban, plugins, toggle, sticker_cmd, shutoff, login } =
           await personalDB(
             ["ban", "toggle", "sticker_cmd", "plugins", "shutoff", "login"],
-            {
-              content: {},
-            },
+            { content: {} },
             "get",
           );
         const { version } = (
@@ -183,69 +200,70 @@ const WhatsBotConnect = async () => {
           )
         ).data;
         let start_msg = false;
-        let blocked_users = false;        
-        const reactArray = require('./lib/emojis.js');
-        console.log("installing plugins");
-        for (const p in plugins) {
-          try {
-            const { data } = await axios(plugins[p] + "/raw");
-            fs.writeFileSync("./plugins/" + p + ".js", data);
-            ext_plugins += 1;
-            require("./plugins/" + p + ".js");
-          } catch (e) {
-            ext_plugins = 1;
-            await personalDB(
-              ["plugins"],
-              {
-                content: {
-                  id: p,
-                },
-              },
-              "delete",
-            );
-            console.log("there is an error in plugin\nplugin name: " + p);
-            console.log(e);
-          }
-        }
-        console.log("external plugins installed successfully");
-        fs.readdirSync("./plugins").forEach((plugin) => {
-          if (path.extname(plugin).toLowerCase() == ".js") {
-            try {
-              require("./plugins/" + plugin);
-            } catch (e) {
-              console.log(e);
-             fs.unlinkSync("./plugins/" + plugin);
+        let blocked_users = false;
+        const reactArray = require("./lib/emojis.js");
+        console.log(clc.yellow("⬇️ installing plugins..."));
+        try {
+          const plugins = await fs.readdir("./plugins");
+          plugins.forEach(async (plugin) => {
+            if (path.extname(plugin).toLowerCase() === ".js") {
+              try {
+                await require(`./plugins/${plugin}`);
+              } catch (e) {
+                console.log(clc.red(`Error loading ${plugin}:`, e));
+                // await fs.unlink(`./plugins/${plugin}`);
+                console.log(clc.yellow(`${plugin} removed due to error.`));
+              }
             }
+          });
+        } catch (err) {
+          console.error(clc.red("Error reading plugins directory:", err));
+        }
+        console.log(clc.green("✅ plugins installed successfully"));
+        try {
+          let ext_plugins = 0;
+          for (const p in plugins) {
+            try {
+              const { data } = await axios(plugins[p] + "/raw");
+              await fs.writeFile(`./plugins/${p}.js`, data);
+              ext_plugins += 1;
+              require(`./plugins/${p}.js`);
+              console.log(clc.green(`${p} installed successfully.`));
+            } catch (e) {
+              ext_plugins = 1;
+              await personalDB(["plugins"], { content: { id: p } }, "delete");
+              console.log(clc.red(`There was an error in installing ${p}:`));
+              console.error(e);
+            }
+            await new Promise((resolve) => setTimeout(resolve, 1000));
           }
-        });
-        console.log("plugin installed successfully");
-        console.log("Login successful!");
+          console.log(clc.green("✅ External plugins installed successfully"));
+        } catch (err) {
+          console.error(clc.red("Error installing external plugins:", err));
+        }
         if (login != "true" && shutoff != "true") {
           if (start_msg && start_msg.status && start_msg.data) {
             await conn.sendMessage(conn.user.id, {
               text: start_msg.data,
             });
           } else if (shutoff != "true") {
-            await personalDB(
-              ["login"],
-              {
-                content: "true",
-              },
-              "set",
-            );
+            await personalDB(["login"], { content: "true" }, "set");
             let start_msg =
               "```" +
               `Alpha-md connected!!\nversion : ${require("./package.json").version}\nplugins : ${commands.length.toString()}\nexternal plugins : ${ext_plugins}\nmode : ${config.WORKTYPE}\nsudo:${config.SUDO}\nprefix : ${config.PREFIX}` +
               "```\n\n";
-              const propertiesToCheck = ['STATUS_VIEW', 'SAVE_STATUS', 'ADMIN_SUDO_ACCESS', 'ALWAYS_ONLINE'];
-           for (const key of propertiesToCheck) {
-           if (key in config) {
-        start_msg += `_*${key}* : ${config[key] ? '✅' : '❌'}_\n`;
-    }
-}
-            await conn.sendMessage(conn.user.id, {
-              text: start_msg,
-            });
+            const propertiesToCheck = [
+              "STATUS_VIEW",
+              "SAVE_STATUS",
+              "ADMIN_SUDO_ACCESS",
+              "ALWAYS_ONLINE",
+            ];
+            for (const key of propertiesToCheck) {
+              if (key in config) {
+                start_msg += `_*${key}* : ${config[key] ? "✅" : "❌"}_\n`;
+              }
+            }
+            await conn.sendMessage(conn.user.id, { text: start_msg });
           }
         } else if (shutoff != "true")
           await conn.sendMessage(conn.user.id, {
@@ -254,37 +272,68 @@ const WhatsBotConnect = async () => {
         const createrS = await insertSudo();
         conn.ev.on("group-participants.update", async (m) => {
           if (ban && ban.includes(m.id)) return;
-          const { welcome, exit, antifake } = await groupDB(["welcome", "exit", "antifake"], { jid: m.id }, "get");
+          const { welcome, exit, antifake } = await groupDB(
+            ["welcome", "exit", "antifake"],
+            { jid: m.id },
+            "get",
+          );
           if (welcome || exit) await Welcome(m, conn, { welcome, exit });
           if (!antifake || antifake.status == "false" || !antifake.data) return;
-          if (m.action != "remove" && m.participants[0] != jidNormalizedUser(conn.user.id)) {
+          if (
+            m.action != "remove" &&
+            m.participants[0] != jidNormalizedUser(conn.user.id)
+          ) {
             let inv = true;
             const notAllowed = antifake.data.split(",") || [antifake.data];
             notAllowed.map(async (num) => {
-              if (num.includes("!") && m.participants[0].startsWith(num.replace(/[^0-9]/g, ""))) inv = false;
-              else if (m.participants[0].startsWith(num)) return await conn.groupParticipantsUpdate(m.id, m.participants, "remove");
+              if (
+                num.includes("!") &&
+                m.participants[0].startsWith(num.replace(/[^0-9]/g, ""))
+              )
+                inv = false;
+              else if (m.participants[0].startsWith(num))
+                return await conn.groupParticipantsUpdate(
+                  m.id,
+                  m.participants,
+                  "remove",
+                );
             });
             await sleep(500);
-            if (inv) return await conn.groupParticipantsUpdate(m.id, m.participants, "remove");
-          }
-        });        
-        conn.ev.on("contacts.update", (update) => {
-          for (let contact of update) {
-            let id = conn.decodeJid(contact.id);
-            if (store && store.contacts)
-              store.contacts[id] = {
-                id,
-                name: contact.notify,
-              };
+            if (inv)
+              return await conn.groupParticipantsUpdate(
+                m.id,
+                m.participants,
+                "remove",
+              );
           }
         });
-      
+        conn.ev.on("contacts.update", async (update) => {
+          for (let contact of update) {
+            let id = conn.decodeJid(contact.id);
+            await saveContact(id, contact.notify);
+          }
+        });
+
+        conn.ev.on("chats.update", async (chats) => {
+          chats.forEach(async (chat) => {
+            await saveChat(chat);
+          });
+        });
+
         conn.ev.on("messages.upsert", async (chatUpdate) => {
           if (set_of_filters.has(chatUpdate.messages[0].key.id)) {
             set_of_filters.delete(chatUpdate.messages[0].key.id);
             return;
           }
-          const { pdm, antipromote, antidemote, filter, antilink, antiword, antibot, } = await groupDB(
+          const {
+            pdm,
+            antipromote,
+            antidemote,
+            filter,
+            antilink,
+            antiword,
+            antibot,
+          } = await groupDB(
             [
               "pdm",
               "antidemote",
@@ -398,26 +447,15 @@ const WhatsBotConnect = async () => {
             return;
           let em_ed = false,
             m;
-          if (
-            chatUpdate.messages[0]?.message?.pollUpdateMessage &&
-            store.poll_message.message[0]
-          ) {
+          if (chatUpdate.messages[0]?.message?.pollUpdateMessage) {
             const content = normalizeMessageContent(
               chatUpdate.messages[0].message,
             );
             const creationMsgKey =
               content.pollUpdateMessage.pollCreationMessageKey;
-            let count = 0,
-              contents_of_poll;
-            for (let i = 0; i < store.poll_message.message.length; i++) {
-              if (
-                creationMsgKey.id ==
-                Object.keys(store.poll_message.message[i])[0]
-              ) {
-                contents_of_poll = store.poll_message.message[i];
-                break;
-              } else count++;
-            }
+
+            // Load poll data from the database
+            const contents_of_poll = await loadPoll(creationMsgKey.id);
             if (!contents_of_poll) return;
             const poll_key = Object.keys(contents_of_poll)[0];
             const { title, onlyOnce, participates, votes, withPrefix, values } =
@@ -482,30 +520,35 @@ const WhatsBotConnect = async () => {
                   chatUpdate.messages[0],
                   voterJid,
                 );
-                m = new serialize(conn, poll.messages[0], createrS, store);
+                m = new serialize(conn, poll.messages[0], createrS);
                 m.isBot = false;
                 m.body = m.body + " " + pollCreation.pollCreationMessage.name;
                 if (withPrefix) m.body = PREFIX_FOR_POLL + m.body;
                 m.isCreator = true;
                 if (onlyOnce && participates.length == 1)
-                  delete store.poll_message.message[count][poll_key];
-                else if (
-                  !store.poll_message.message[count][poll_key].votes.includes(
-                    m.sender,
-                  )
-                )
-                  store.poll_message.message[count][poll_key].votes.push(
-                    m.sender,
-                  );
+                  await pollDb.destroy({
+                    where: { pollKey: creationMsgKey.id },
+                  });
+                else if (!contents_of_poll[poll_key].votes.includes(m.sender))
+                  contents_of_poll[poll_key].votes.push(m.sender);
+                await savePoll(creationMsgKey.id, contents_of_poll);
               }
-            } catch (e) {}
+            } catch (e) {
+              console.log(e);
+            }
           } else {
-            m = new serialize(conn, chatUpdate.messages[0], createrS, store);
+            m = new serialize(conn, chatUpdate.messages[0], createrS);
+            await saveMessage(chatUpdate.messages[0], m.sender);
           }
           if (!m) await sleep(500);
           if (!m) return;
-          if (blocked_users && blocked_users.data && m.jid && blocked_users.data.includes(m.jid.split("@")[0])) {
-              return;
+          if (
+            blocked_users &&
+            blocked_users.data &&
+            m.jid &&
+            blocked_users.data.includes(m.jid.split("@")[0])
+          ) {
+            return;
           }
           if (blocked_users && blocked_users.data.includes(m.jid.split("@")[0]))
             return;
@@ -549,7 +592,7 @@ const WhatsBotConnect = async () => {
                   filter[f].type,
                 );
                 set_of_filters.add(msg.key.id);
-                m = new serialize(conn, msg, createrS, store);
+                m = new serialize(conn, msg, createrS);
                 m.isBot = false;
                 m.body = PREFIX_FOR_POLL + m.body;
               }
@@ -637,55 +680,141 @@ const WhatsBotConnect = async () => {
           commands.map(async (command) => {
             if (shutoff == "true" && !command.root) return;
             if (shutoff == "true" && !m.isCreator) return;
-            if (m.jid === "120363264810405727@g.us" && (conn.user.id !== "2349137982266@s.whatsapp.net" || conn.user.id !== "2348114860536@s.whatsapp.net")) return;
+            if (
+              m.jid === "120363264810405727@g.us" &&
+              (conn.user.id !== "2349137982266@s.whatsapp.net" ||
+                conn.user.id !== "2348114860536@s.whatsapp.net")
+            )
+              return;
             if (ban && ban.includes(m.jid) && !command.root) return;
             let runned = false;
             if (em_ed == "active") em_ed = false;
             if (MOD == "public" && command.fromMe === true) {
               return;
-          } else if (MOD == "private" && !m.isCreator) {
+            } else if (MOD == "private" && !m.isCreator) {
               return;
-          }     
-            for (const t in toggle) {
-                if (toggle[t].status != "false" && m.body.toLowerCase().startsWith(t)) em_ed = "active";
             }
-            if (command.onlyPm && m.isGroup || command.onlyGroup && !m.isGroup || (!command.pattern && !command.on) || (m.isBot && !command.allowBot)) em_ed = "active";
+            for (const t in toggle) {
+              if (
+                toggle[t].status != "false" &&
+                m.body.toLowerCase().startsWith(t)
+              )
+                em_ed = "active";
+            }
+            if (
+              (command.onlyPm && m.isGroup) ||
+              (command.onlyGroup && !m.isGroup) ||
+              (!command.pattern && !command.on) ||
+              (m.isBot && !command.allowBot)
+            )
+              em_ed = "active";
             if (command.pattern) {
-                EventCmd = command.pattern.replace(/[^a-zA-Z0-9-|+]/g, "");
-                if (((EventCmd.includes("|") && EventCmd.split("|").map((a) => m.body.startsWith(a)).includes(true)) || m.body.toLowerCase().startsWith(EventCmd)) && (command.DismissPrefix || !noncmd)) {
-                    if (config.DISABLE_PM && !m.isGroup || config.DISABLE_GRP && m.isGroup) return;
-                    m.command = handler + EventCmd;
-                    m.text = m.body.slice(EventCmd.length).trim();
-                    if (toMessage(config.READ) == "cmd") await conn.readMessages([m.key]);
-                    if (!em_ed) {
-                        if (["help", "use", "usage"].includes(m.text)) {
-                            if (!["undefined", "null", "false", undefined].includes(command.usage)) return await m.send(command.usage);
-                            return await m.send("sorry dear! command usage not found!!");
-                        }
-                        const mediaTypes = { "text": !m.displayText, "sticker": !/webp/.test(m.mime), "image": !/image/.test(m.mime), "video": !/video/.test(m.mime), "audio": !/audio/.test(m.mime) };
-                        if (mediaTypes[command.media]) return await m.send(`this plugin only response when data as ${command.media}`);
-                        runned = true;
-                        await command.function(m, m.text, m.command, store).catch(async (e) => {
-                            if (config.ERROR_MSG) {
-                                return await m.client.sendMessage(m.user.jid, { text: "                *_ERROR REPORT_* \n\n```command: " + m.command + "```\n```version: " + require("./package.json").version + "```\n```letest vesion: " + version + "```\n```user: @" + m.sender.replace(/[^0-9]/g, "") + "```\n\n```message: " + m.body + "```\n```error: " + require("util").format(e) + "```", mentions: [m.sender] }, { quoted: m.data });
-                            }
-                            console.error(e);
-                        });
-                    }
-                    await conn.sendPresenceUpdate(config.BOT_PRESENCE, m.from);
-                    if (toMessage(config.REACT) == "true" || toMessage(config.REACT) == "cmd" && command.react) {
-                        isReact = true;
-                        await sleep(100);
-                        await m.send({ text: command.react || reactArray[Math.floor(Math.random() * reactArray.length)], key: m.key }, {}, "react");
-                    }
+              EventCmd = command.pattern.replace(/[^a-zA-Z0-9-|+]/g, "");
+              if (
+                ((EventCmd.includes("|") &&
+                  EventCmd.split("|")
+                    .map((a) => m.body.startsWith(a))
+                    .includes(true)) ||
+                  m.body.toLowerCase().startsWith(EventCmd)) &&
+                (command.DismissPrefix || !noncmd)
+              ) {
+                if (
+                  (config.DISABLE_PM && !m.isGroup) ||
+                  (config.DISABLE_GRP && m.isGroup)
+                )
+                  return;
+                m.command = handler + EventCmd;
+                m.text = m.body.slice(EventCmd.length).trim();
+                if (toMessage(config.READ) == "cmd")
+                  await conn.readMessages([m.key]);
+                if (!em_ed) {
+                  if (["help", "use", "usage"].includes(m.text)) {
+                    if (
+                      !["undefined", "null", "false", undefined].includes(
+                        command.usage,
+                      )
+                    )
+                      return await m.send(command.usage);
+                    return await m.send(
+                      "sorry dear! command usage not found!!",
+                    );
+                  }
+                  const mediaTypes = {
+                    text: !m.displayText,
+                    sticker: !/webp/.test(m.mime),
+                    image: !/image/.test(m.mime),
+                    video: !/video/.test(m.mime),
+                    audio: !/audio/.test(m.mime),
+                  };
+                  if (mediaTypes[command.media])
+                    return await m.send(
+                      `this plugin only response when data as ${command.media}`,
+                    );
+                  runned = true;
+                  await command
+                    .function(m, m.text, m.command)
+                    .catch(async (e) => {
+                      if (config.ERROR_MSG) {
+                        return await m.client.sendMessage(
+                          m.user.jid,
+                          {
+                            text:
+                              "                *_ERROR REPORT_* \n\n```command: " +
+                              m.command +
+                              "```\n```version: " +
+                              require("./package.json").version +
+                              "```\n```letest vesion: " +
+                              version +
+                              "```\n```user: @" +
+                              m.sender.replace(/[^0-9]/g, "") +
+                              "```\n\n```message: " +
+                              m.body +
+                              "```\n```error: " +
+                              require("util").format(e) +
+                              "```",
+                            mentions: [m.sender],
+                          },
+                          { quoted: m.data },
+                        );
+                      }
+                      console.error(e);
+                    });
                 }
+                await conn.sendPresenceUpdate(config.BOT_PRESENCE, m.from);
+                if (
+                  toMessage(config.REACT) == "true" ||
+                  (toMessage(config.REACT) == "cmd" && command.react)
+                ) {
+                  isReact = true;
+                  await sleep(100);
+                  await m.send(
+                    {
+                      text:
+                        command.react ||
+                        reactArray[
+                          Math.floor(Math.random() * reactArray.length)
+                        ],
+                      key: m.key,
+                    },
+                    {},
+                    "react",
+                  );
+                }
+              }
             }
             if (!em_ed && !runned) {
-                if (command.on === "all" && m || command.on === "text" && m.displayText || command.on === "sticker" && m.type === "stickerMessage" || command.on === "image" && m.type === "imageMessage" || command.on === "video" && m.type === "videoMessage" || command.on === "audio" && m.type === "audioMessage") {
-                    command.function(m, m.text, m.command, chatUpdate, store);
-                }
+              if (
+                (command.on === "all" && m) ||
+                (command.on === "text" && m.displayText) ||
+                (command.on === "sticker" && m.type === "stickerMessage") ||
+                (command.on === "image" && m.type === "imageMessage") ||
+                (command.on === "video" && m.type === "videoMessage") ||
+                (command.on === "audio" && m.type === "audioMessage")
+              ) {
+                command.function(m, m.text, m.command, chatUpdate);
+              }
             }
-        });               
+          });
           // some external function
           if (
             config.AJOIN &&
@@ -705,18 +834,18 @@ const WhatsBotConnect = async () => {
           try {
             if (toMessage(config.READ) == "true")
               await conn.readMessages([m.key]);
-         if(config.LOGS){
-            if (m.message) {
-              console.log("[ MESSAGE ]"),
-                console.log(new Date()),
-                console.log(m.displayText || m.type) +
-                  "\n" +
-                  console.log("=> From"),
-                console.log(m.pushName),
-                console.log(m.sender) + "\n" + console.log("=> In"),
-                console.log(m.isGroup ? m.pushName : "Private Chat", m.from);
+            if (config.LOGS) {
+              if (m.message) {
+                console.log("[ MESSAGE ]"),
+                  console.log(new Date()),
+                  console.log(m.displayText || m.type) +
+                    "\n" +
+                    console.log("=> From"),
+                  console.log(m.pushName),
+                  console.log(m.sender) + "\n" + console.log("=> In"),
+                  console.log(m.isGroup ? m.pushName : "Private Chat", m.from);
+              }
             }
-          }
           } catch (err) {
             console.log(err);
           }
@@ -731,10 +860,14 @@ const WhatsBotConnect = async () => {
               await conn.updateBlockStatus(m.from, "block");
           } else if (m.isGroup && !m.isCreator && shutoff != "true") {
             const text = (m.displayText || "ÃŸÃŸÃŸÃŸÃŸ").toLowerCase();
-            
+
             if (!(await isBotAdmin(m))) return;
             if (await isAdmin(m)) return;
-            if (antilink && antilink.status == "true" && text.includes("http") ) {
+            if (
+              antilink &&
+              antilink.status == "true" &&
+              text.includes("http")
+            ) {
               if (antilink.action == "warn") {
                 await m.send(
                   {
@@ -970,47 +1103,53 @@ const WhatsBotConnect = async () => {
               });
             }
           }
-         // antidelete
-         if (config.ANTI_DELETE === "null") {
-          return;
-      }
-      if (config.ANTI_DELETE && m.type === "protocolMessage") {
-          const protocolMessage = chatUpdate.messages[0]?.message.protocolMessage;
-          if (!protocolMessage || !protocolMessage.key) {
-              return;
+          // antidelete
+          if (config.ANTI_DELETE === "null") {
+            return;
           }
-          const key = protocolMessage.key;
-          const chat = conn.chats[m.jid]?.[key.id];
-          if (!chat || m.isCreator) {
+          if (config.ANTI_DELETE && m.type === "protocolMessage") {
+            const protocolMessage =
+              chatUpdate.messages[0]?.message.protocolMessage;
+            if (!protocolMessage || !protocolMessage.key) {
               return;
-          }
-          let forwardTo = config.ANTI_DELETE === "pm" ? conn.user.id : (config.ANTI_DELETE === "gc" ? m.jid : config.ANTI_DELETE);
-          try {
+            }
+            const key = protocolMessage.key;
+            const chat = conn.chats[m.jid]?.[key.id];
+            if (!chat || m.isCreator) {
+              return;
+            }
+            let forwardTo =
+              config.ANTI_DELETE === "pm"
+                ? conn.user.id
+                : config.ANTI_DELETE === "gc"
+                  ? m.jid
+                  : config.ANTI_DELETE;
+            try {
               await m.forwardMessage(forwardTo, chat, {
-                  linkPreview: {
-                      title: "deleted message",
-                  },
-                  quoted: {
-                      key,
-                      message: chat,
-                  },
+                linkPreview: {
+                  title: "deleted message",
+                },
+                quoted: {
+                  key,
+                  message: chat,
+                },
               });
-          } catch (error) {
+            } catch (error) {
               await m.forwardMessage(m.jid, chat, {
-                  linkPreview: {
-                      title: "deleted message",
-                  },
-                  quoted: {
-                      key,
-                      message: chat,
-                  },
+                linkPreview: {
+                  title: "deleted message",
+                },
+                quoted: {
+                  key,
+                  message: chat,
+                },
               });
+            }
+          } else if (config.ANTI_DELETE && m.type !== "protocolMessage") {
+            conn.chats ??= {};
+            conn.chats[m.jid] ??= {};
+            conn.chats[m.jid][m.key.id] = m.message;
           }
-      } else if (config.ANTI_DELETE && m.type !== "protocolMessage") {
-          conn.chats ??= {};
-          conn.chats[m.jid] ??= {};
-          conn.chats[m.jid][m.key.id] = m.message;
-      }                  
           if (!em_ed && shutoff != "true") {
             if (m && toMessage(config.REACT) == "emoji" && !isReact) {
               if (m.body.match(/\p{EPres}|\p{ExtPict}/gu)) {
@@ -1027,9 +1166,63 @@ const WhatsBotConnect = async () => {
           }
         });
       } else if (connection === "close") {
-        console.log(    "Connection closed with bot. Please put New Session ID again.", );
-        await sleep(3000);
-        WhatsBotConnect();
+        const statusCode = new Boom(lastDisconnect?.error)?.output?.statusCode;
+
+        if (statusCode !== DisconnectReason.loggedOut) {
+          await delay(300);
+          switch (statusCode) {
+            case DisconnectReason.badSession:
+              console.log(
+                clc.red("📁 Bad Session File, delete session and rescan."),
+              );
+              fs.rmSync("./auth_info_baileys", {
+                recursive: true,
+              });
+              process.exit(0);
+              break;
+            case DisconnectReason.connectionClosed:
+              console.log(clc.red("🔌 Connection closed, reconnecting..."));
+              ciph3r();
+              break;
+            case DisconnectReason.connectionLost:
+              console.log(
+                clc.red("🔍 Connection lost from server, reconnecting..."),
+              );
+              ciph3r();
+              break;
+            case DisconnectReason.connectionReplaced:
+              console.log(
+                clc.red(
+                  "🔄 Connection replaced, a new session is opened and reconnected...",
+                ),
+              );
+              ciph3r();
+              break;
+            case DisconnectReason.restartRequired:
+              console.log(clc.red("🔁 Restart required, restarting..."));
+              ciph3r();
+              break;
+            case DisconnectReason.timedOut:
+              console.log(clc.red("⏳ Connection timed out, reconnecting..."));
+              ciph3r();
+              break;
+            case DisconnectReason.multideviceMismatch:
+              console.log(clc.red("📱 Multi device mismatch, rescan."));
+              process.exit(1);
+              break;
+            default:
+              console.log(
+                clc.red(`❓ Unknown disconnect reason: ${statusCode}`),
+              );
+          }
+        } else {
+          console.log(clc.red("🔒 Connection closed. Device logged out."));
+          fs.rmSync("./auth_info_baileys", {
+            recursive: true,
+          });
+          await delay(3000);
+          process.exit(0);
+        }
       }
       conn.ws.on("CB:call", async (json) => {
         if (json.content[0].tag == "offer") {
@@ -1065,7 +1258,10 @@ const WhatsBotConnect = async () => {
         if (shutoff == "true") return;
         try {
           let owner_msg = false;
-          if (owner_msg && owner_msg.status &&  owner_updt != owner_msg.data.key
+          if (
+            owner_msg &&
+            owner_msg.status &&
+            owner_updt != owner_msg.data.key
           ) {
             await conn.sendMessage(conn.user.id, owner_msg.data.message);
             await personalDB(
@@ -1115,9 +1311,15 @@ const WhatsBotConnect = async () => {
   }
 }; // function closing
 app.get("/md", (req, res) => {
-  res.send("Hello Alpha-md started\nversion: " + require("./package.json").version);
+  res.send(
+    "Hello Alpha-md started\nversion: " + require("./package.json").version,
+  );
 });
 app.listen(config.PORT, () =>
-  console.log(`Alpha-md Server listening on port http://localhost:${config.PORT}`),
+  console.log(clc.green(`Alpha listening on port ${config.PORT}`)),
 );
-WhatsBotConnect().catch((e) => console.log(e));
+ciph3r().catch((e) => {
+  if (config.LOGS) {
+    console.log(clc.red(`Error:`, e));
+  }
+});
