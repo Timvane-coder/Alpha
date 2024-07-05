@@ -1,4 +1,4 @@
 /node_modules
-/database.db
-/.env
-/auth_info_baileys
+database.db
+.env
+auth_info_baileys
