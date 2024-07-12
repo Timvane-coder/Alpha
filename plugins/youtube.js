@@ -39,7 +39,7 @@ alpha(
         jid: message.jid,
         button: buttons,
         header: {
-          title: "Alpha-md",
+          title: "Vesper-multidevice",
           subtitle: "WhatsApp Bot",
           hasMediaAttachment: false,
         },
@@ -96,7 +96,7 @@ alpha(
         jid: message.jid,
         button: buttons,
         header: {
-          title: "Alpha-md",
+          title: "Vesper-multidevice",
           subtitle: "WhatsApp Bot",
           hasMediaAttachment: false,
         },
