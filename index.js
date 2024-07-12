@@ -4,6 +4,16 @@ const bot = require("./lib/bot");
 const fs = require('fs').promises;
 const fetchSession = require("./lib/session");
 
+const express = require('express');
+const http = require('http');
+
+const app = new express();
+let PORT = process.env.PORT || 3000
+
+app.get('/', function (req, res) {
+  res.send('online');
+});
+
 global.__basedir = __dirname;
 
 async function startBot() {
@@ -27,3 +37,10 @@ async function startBot() {
 }
 
 startBot();
+app.listen(PORT, () => {
+  console.log('App listened on port:', PORT)
+})
+
+setInterval(function() {
+  http.get("http://liniadeploy-1622d9568914.herokuapp.com");
+}, 300000);
