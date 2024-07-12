@@ -5,7 +5,7 @@ const dotenv = require("dotenv");
 if (existsSync(".env")) {
   dotenv.config({ path: "./.env" });
 }
-process.env.NODE_OPTIONS = "--max_old_space_size=4096";
+
 const toBool = (x) => x === "true";
 const DATABASE_URL = process.env.DATABASE_URL || "./database.db";
 
