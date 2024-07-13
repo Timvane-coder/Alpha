@@ -70,7 +70,7 @@ alpha(
 
 alpha(
   {
-    pattern: "facebook",
+    pattern: "fb",
     fromMe: isPrivate,
     desc: "To download Facebook media",
     type: "downloader",
