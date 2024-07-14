@@ -10,7 +10,7 @@ function styleText(text) {
 
 alpha(
   {
-    pattern: "menu",
+    pattern: "start",
     fromMe: isPrivate,
     desc: "Show All Commands",
     type: "info",
