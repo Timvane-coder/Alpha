@@ -104,7 +104,7 @@ alpha(
           text: "Click to get result",
         },
         body: {
-          text: `YouTube search results for ${match}`,
+          text: `mediafire search results for ${match}`,
         },
       };
       await message.sendMessage(message.jid, data, {}, "interactive");
