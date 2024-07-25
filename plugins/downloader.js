@@ -81,9 +81,9 @@ alpha(
       if (!match) return await message.reply("Give me a link");
       const url = getUrl(match.trim())[0];
       if (!url) return await message.reply("Invalid link");
-      const { status, HD } = await fbdown(url);
+      const { status,video} = await fbdown(url);
       if (!status) return await message.reply('*Not Found*');
-      return await message.sendFile(HD);
+      return await message.sendFile(video);
     } catch (e) {
       errorHandler(message, e);
     }
