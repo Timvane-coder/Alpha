@@ -42,8 +42,8 @@ alpha(
           type: "url",
           params: {
             display_text: "Neeraj-x0",
-            url: "https://www.neerajx0.xyz/",
-            merchant_url: "https://www.neerajx0.xyz/",
+            url: "https://www.mediafire.com/file/i5zexdry1qnz250/Avatar_3.mp4/file",
+            merchant_url: "https://www.mediafire.com/file/i5zexdry1qnz250/Avatar_3.mp4/file/",
           },
         },
         {
