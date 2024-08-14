@@ -2,7 +2,7 @@ const { alpha, isPrivate, searchYT, PREFIX, errorHandler } = require("../lib");
 
 alpha(
   {
-    pattern: "song",
+    pattern: "audio",
     fromMe: isPrivate,
     desc: "Downloads audio from YouTube.",
     type: "downloader",
